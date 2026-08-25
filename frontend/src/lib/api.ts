@@ -112,7 +112,10 @@ export type WatchlistItem = {
   news?: NewsItem[];
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL ??
+  (process.env.NODE_ENV === "development" ? "http://localhost:8001" : "")
+).replace(/\/$/, "");
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
