@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-app-gradient text-slate-800 antialiased;
+  overscroll-behavior: none;
+  min-height: 100dvh;
+}
+
+input,
+textarea,
+select,
+button {
+  @apply outline-none;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+@layer components {
+  .app-shell {
+    @apply min-h-[100dvh] bg-app-gradient text-slate-800;
+  }
+
+  .glass-header {
+    @apply sticky top-0 z-40 border-b border-white/70 bg-header-gradient backdrop-blur-xl shadow-sm;
+  }
+
+  .glass-card {
+    @apply rounded-2xl border border-white/80 bg-white/80 p-5 shadow-lg shadow-emerald-100/40 backdrop-blur-sm;
+  }
+
+  .glass-card-sm {
+    @apply rounded-2xl border border-white/80 bg-white/80 shadow-md shadow-emerald-100/30 backdrop-blur-sm;
+  }
+
+  .btn-primary {
+    @apply rounded-xl bg-brand-gradient px-4 py-2.5 text-sm font-medium text-white shadow-md shadow-emerald-200/60 transition hover:opacity-95 active:scale-[0.98] disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply rounded-xl border border-emerald-200/80 bg-white/90 px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-emerald-50 active:scale-[0.98];
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-emerald-100 bg-white/95 px-4 py-3 text-slate-800 shadow-inner placeholder:text-slate-400;
+  }
+
+  .nav-pill-active {
+    @apply rounded-full bg-brand-gradient px-4 py-2 text-sm text-white shadow-md shadow-emerald-200/50;
+  }
+
+  .nav-pill {
+    @apply rounded-full bg-white/80 px-4 py-2 text-sm text-slate-600 shadow-sm hover:bg-emerald-50;
+  }
+
+  .text-muted {
+    @apply text-slate-500;
+  }
+
+  .chat-assistant {
+    @apply max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tl-md border border-emerald-100 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm;
+  }
+
+  .chat-user {
+    @apply max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tr-md bg-brand-gradient px-3 py-2.5 text-sm text-white shadow-md shadow-emerald-200/50;
+  }
+}
+
+@layer utilities {
+  .page-main {
+    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 768px) {
+    .page-main {
+      padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  .bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+    @apply border-t border-white/70 bg-white/85 backdrop-blur-xl;
+  }
+
+  .floating-action {
+    @apply fixed z-50;
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 768px) {
+    .floating-action {
+      bottom: calc(1.25rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  .floating-action-left {
+    left: calc(0.75rem + env(safe-area-inset-left));
+  }
+
+  .floating-action-right {
+    right: calc(0.75rem + env(safe-area-inset-right));
+  }
+}

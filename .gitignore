@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+backend/.venv/
+__pycache__/
+*.py[cod]
+
+# Env & secrets
+.env
+.env.local
+backend/.env
+frontend/.env.local
+frontend/.env*.local
+# Build / runtime
+.next/
+backend/cashy_trade.db
+*.log
+
+# OS
+.DS_Store
+Thumbs.db

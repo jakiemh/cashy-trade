@@ -1,0 +1,14 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: cashy
+      POSTGRES_PASSWORD: cashy
+      POSTGRES_DB: cashy_trade
+    ports:
+      - "5432:5432"
+    volumes:
+      - cashy_pg:/var/lib/postgresql/data
+
+volumes:
+  cashy_pg:
