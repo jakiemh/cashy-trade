@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import CashyAvatar from "@/components/CashyAvatar";
 import { useClientAuth } from "@/hooks/useClientAuth";
 import { api, getToken } from "@/lib/api";
@@ -8,12 +8,16 @@ import { DEFAULT_CASHY_AVATAR } from "@/lib/cashy";
 
 type ChatItem = { role: "user" | "assistant"; content: string };
 
+export type CashyBubbleHandle = {
+  open: () => void;
+};
+
 const QUICK_ACTIONS: Record<string, string[]> = {
   es: ["tasa de acierto", "señales hoy", "precio AAPL", "noticias NVDA", "estadísticas", "ayuda"],
   en: ["win rate", "signals today", "AAPL price", "NVDA news", "stats", "help"],
 };
 
-export default function CashyBubble() {
+export default forwardRef<CashyBubbleHandle>(function CashyBubble(_, ref) {
   const [open, setOpen] = useState(false);
   const { ready, authed } = useClientAuth();
   const [botName, setBotName] = useState("Cashy");
@@ -24,6 +28,10 @@ export default function CashyBubble() {
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    open: () => setOpen(true),
+  }));
 
   function loadSettings() {
     if (!getToken()) return;
@@ -172,7 +180,7 @@ export default function CashyBubble() {
         <button
           type="button"
           aria-label="Abrir Cashy"
-          className="floating-action right floating-action-right group relative rounded-full border-2 border-emerald-300 bg-white p-1 shadow-xl shadow-emerald-200/60 transition active:scale-95 sm:hover:scale-105"
+          className="floating-action floating-action-right group relative hidden rounded-full border-2 border-emerald-300 bg-white p-1 shadow-xl shadow-emerald-200/60 transition active:scale-95 sm:hover:scale-105 md:block"
           onClick={() => setOpen(true)}
         >
           <CashyAvatar src={avatarUrl} size={56} className="border-brand-400" />
@@ -183,4 +191,4 @@ export default function CashyBubble() {
       ) : null}
     </>
   );
-}
+});

@@ -3,25 +3,70 @@
 import InstallPwaBanner from "@/components/InstallPwaBanner";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import CashyBubble from "@/components/CashyBubble";
+import { useRef } from "react";
+import CashyBubble, { type CashyBubbleHandle } from "@/components/CashyBubble";
 import CashyAvatar from "@/components/CashyAvatar";
-import SettingsGear from "@/components/SettingsGear";
+import MobileBottomNav, { mobileNavIcons } from "@/components/MobileBottomNav";
+import SettingsGear, { type SettingsGearHandle } from "@/components/SettingsGear";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSignalPollingContext } from "@/contexts/SignalPollingContext";
 import { setToken } from "@/lib/api";
 import { DEFAULT_CASHY_AVATAR } from "@/lib/cashy";
+
+function MobileSettingsButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label="Configuración"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-emerald-200 bg-white/90 text-slate-600 shadow-sm active:scale-95 md:hidden"
+      onClick={onClick}
+    >
+      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+        <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" strokeWidth="1.8" />
+        <path
+          d="M19.4 13.5a7.8 7.8 0 0 0 .1-3l2-1.1-2-3.5-2.3 1a8 8 0 0 0-2.6-1.5l-.4-2.5H9.8l-.4 2.5a8 8 0 0 0-2.6 1.5l-2.3-1-2 3.5 2 1.1a7.8 7.8 0 0 0 .1 3l-2 1.1 2 3.5 2.3-1a8 8 0 0 0 2.6 1.5l.4 2.5h4.4l.4-2.5a8 8 0 0 0 2.6-1.5l2.3 1 2-3.5-2-1.1Z"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
+  );
+}
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t, isAdmin } = useLocale();
   const { pendingCount } = useSignalPollingContext();
+  const settingsRef = useRef<SettingsGearHandle>(null);
+  const cashyRef = useRef<CashyBubbleHandle>(null);
 
   const links = [
-    { href: "/dashboard", label: t("nav.dashboard"), short: t("nav.home") },
-    { href: "/tickers", label: t("nav.tickers"), short: t("nav.tickers") },
-    { href: "/signals", label: t("nav.signals"), short: t("nav.signals") },
-    { href: "/journal", label: t("nav.journal"), short: t("nav.trades") },
+    {
+      href: "/dashboard",
+      label: t("nav.dashboard"),
+      short: t("nav.home"),
+      icon: mobileNavIcons.home,
+    },
+    {
+      href: "/tickers",
+      label: t("nav.tickers"),
+      short: t("nav.tickers"),
+      icon: mobileNavIcons.tickers,
+    },
+    {
+      href: "/signals",
+      label: t("nav.signals"),
+      short: t("nav.signals"),
+      icon: mobileNavIcons.signals,
+    },
+    {
+      href: "/journal",
+      label: t("nav.journal"),
+      short: t("nav.trades"),
+      icon: mobileNavIcons.journal,
+    },
   ];
 
   return (
@@ -40,6 +85,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <MobileSettingsButton onClick={() => settingsRef.current?.open()} />
             {isAdmin ? (
               <Link href="/admin" className={pathname.startsWith("/admin") ? "nav-pill-active" : "nav-pill"}>
                 {t("nav.admin")}
@@ -80,31 +126,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 md:hidden">
-        <div className="mx-auto grid max-w-lg grid-cols-4">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`relative flex flex-col items-center justify-center px-2 py-3 text-xs ${
-                pathname.startsWith(link.href) ? "font-semibold text-brand-600" : "text-slate-500"
-              }`}
-            >
-              <span className="relative">
-                {link.short}
-                {link.href === "/signals" && pendingCount > 0 ? (
-                  <span className="absolute -right-3 -top-2 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-                    {pendingCount > 9 ? "9+" : pendingCount}
-                  </span>
-                ) : null}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      <MobileBottomNav
+        links={links}
+        pendingCount={pendingCount}
+        onOpenCashy={() => cashyRef.current?.open()}
+      />
 
-      <SettingsGear />
-      <CashyBubble />
+      <SettingsGear ref={settingsRef} />
+      <CashyBubble ref={cashyRef} />
     </div>
   );
 }

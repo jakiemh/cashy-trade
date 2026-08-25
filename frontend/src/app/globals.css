@@ -81,7 +81,7 @@ select {
 
 @layer utilities {
   .page-main {
-    padding-bottom: calc(7.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
   }
 
   @media (min-width: 768px) {
@@ -91,19 +91,33 @@ select {
   }
 
   .bottom-nav {
-    padding-bottom: env(safe-area-inset-bottom);
-    @apply border-t border-white/70 bg-white/85 backdrop-blur-xl;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    @apply border-t border-emerald-100/90 bg-white/95 shadow-[0_-8px_32px_rgba(16,185,129,0.1)] backdrop-blur-xl;
+  }
+
+  .bottom-nav-item {
+    @apply flex min-h-[3.25rem] flex-col items-center justify-end gap-0.5 pb-1 text-[10px] font-medium text-slate-500 transition active:scale-95;
+  }
+
+  .bottom-nav-item-active {
+    @apply font-semibold text-brand-600;
+  }
+
+  .bottom-nav-icon {
+    @apply flex h-9 w-9 items-center justify-center rounded-2xl text-slate-500 transition;
+  }
+
+  .bottom-nav-icon-active {
+    @apply bg-emerald-100 text-brand-600 shadow-sm;
+  }
+
+  .bottom-nav-fab {
+    @apply flex h-[3.75rem] w-[3.75rem] items-center justify-center rounded-full border-[3px] border-white bg-white shadow-lg shadow-emerald-200/70 transition active:scale-95;
   }
 
   .floating-action {
     @apply fixed z-50;
-    bottom: calc(4.75rem + env(safe-area-inset-bottom));
-  }
-
-  @media (min-width: 768px) {
-    .floating-action {
-      bottom: calc(1.25rem + env(safe-area-inset-bottom));
-    }
+    bottom: calc(1.25rem + env(safe-area-inset-bottom));
   }
 
   .floating-action-left {

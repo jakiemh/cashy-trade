@@ -1,9 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import SettingsPanel from "@/components/SettingsPanel";
 import { useClientAuth } from "@/hooks/useClientAuth";
 import { useLocale } from "@/contexts/LocaleContext";
+
+export type SettingsGearHandle = {
+  open: () => void;
+};
 
 function GearIcon() {
   return (
@@ -19,10 +23,14 @@ function GearIcon() {
   );
 }
 
-export default function SettingsGear() {
+export default forwardRef<SettingsGearHandle>(function SettingsGear(_, ref) {
   const [open, setOpen] = useState(false);
   const { ready, authed } = useClientAuth();
   const { t } = useLocale();
+
+  useImperativeHandle(ref, () => ({
+    open: () => setOpen(true),
+  }));
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -39,7 +47,7 @@ export default function SettingsGear() {
       <button
         type="button"
         aria-label="Configuración"
-        className="floating-action floating-action-left flex h-14 w-14 items-center justify-center rounded-full border border-emerald-200 bg-white/95 text-slate-600 shadow-xl shadow-emerald-200/50 transition hover:border-brand-400 hover:text-brand-600 active:scale-95"
+        className="floating-action floating-action-left hidden h-14 w-14 items-center justify-center rounded-full border border-emerald-200 bg-white/95 text-slate-600 shadow-xl shadow-emerald-200/50 transition hover:border-brand-400 hover:text-brand-600 active:scale-95 md:flex"
         onClick={() => setOpen(true)}
       >
         <GearIcon />
@@ -76,4 +84,4 @@ export default function SettingsGear() {
       ) : null}
     </>
   );
-}
+});
