@@ -2,35 +2,40 @@
 
 App web multi-usuario para señales del bot, bitácora de trades, dashboard y chatbot interno **Cashy** (sin APIs de IA).
 
+**Producción:** https://cashy-trade.vercel.app
+
 ## Estructura
 
-- `backend/` — FastAPI + SQLite/PostgreSQL
+- `backend/` — FastAPI + PostgreSQL (Neon en prod)
 - `frontend/` — Next.js
 - `Tradingbot_activos/cashy_bridge.py` — puente desde tu bot Python
 
-## 1. Backend
+## Desarrollo local
+
+### Backend
 
 ```powershell
 cd backend
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements.txt
 copy .env.example .env
+cd ..
 .\START_BACKEND.bat
 ```
 
-API docs: http://localhost:8000/docs
+API docs: http://localhost:8001/docs (o 8000)
 
 Variables en `backend/.env`:
 
-- `BOT_API_KEY` — debe coincidir con `CASHY_API_KEY` en tu bot
-- `SECRET_KEY` — JWT de usuarios
-- `DATABASE_URL` — por defecto SQLite local
-- `ADMIN_EMAILS` — emails con acceso al panel admin (separados por coma)
-- `CORS_ORIGINS` — URLs del frontend
+| Variable | Descripción |
+|----------|-------------|
+| `BOT_API_KEY` | Debe coincidir con `CASHY_API_KEY` en el bot |
+| `SECRET_KEY` | JWT de usuarios |
+| `DATABASE_URL` | SQLite local por defecto |
+| `ADMIN_EMAILS` | Emails admin (coma-separados) |
+| `CORS_ORIGINS` | `http://localhost:3000` |
 
-## 2. Frontend
-
-Requiere Node.js 18+.
+### Frontend
 
 ```powershell
 cd frontend
@@ -41,61 +46,69 @@ npm run dev
 
 App: http://localhost:3000
 
-## 3. Conectar tu bot
+`frontend/.env.local`:
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:8001
+```
+
+## Conectar tu bot
 
 En `Tradingbot_activos/config.py`:
 
 ```python
-CASHY_API_URL = "http://localhost:8000"
-CASHY_API_KEY = "cashy-bot-dev-key"   # mismo valor que BOT_API_KEY
+# Producción
+CASHY_API_URL = "https://cashy-trade.vercel.app"
+CASHY_API_KEY = "<ver scripts/.production-secrets.local>"
+
+# Local
+# CASHY_API_URL = "http://localhost:8001"
+# CASHY_API_KEY = "cashy-bot-dev-key"
 ```
 
-## 4. Flujo de uso
+El bridge incluye seguro `cashy_compra_ok`: si falla el POST de COMPRA, reenvía antes del CIERRE.
+
+## Flujo de uso
 
 1. Regístrate en `/register`
-2. Ve señales en `/signals` — registra trades, filtra, alertas
+2. Ve señales en `/signals` — registra trades, filtros, alertas
 3. Cierra trades en `/journal` — exporta CSV
-4. Consulta stats y curva de equity en `/dashboard`
-5. Habla con Cashy (burbuja flotante)
-6. Cambia idioma ES/EN en Configuración (engranaje)
+4. Stats y curva de equity en `/dashboard`
+5. Tickers con precios y noticias en `/tickers`
+6. Cashy (burbuja flotante) — win rate, señales hoy, noticias
+7. Idioma ES/EN en Configuración (engranaje)
 
 ## Fases completadas
 
-- [x] Fase 1–2: MVP, watchlist, noticias, Cashy chat
-- [x] Fase 3: formularios de trades, filtros, equity curve, polling + alertas
-- [x] Fase 4: i18n ES/EN, export CSV, panel admin, Docker + env producción
+- [x] **Fase 1–2:** MVP, watchlist, noticias, Cashy chat
+- [x] **Fase 3:** formularios trades, filtros, equity curve, polling + alertas
+- [x] **Fase 4:** i18n ES/EN, export CSV, panel admin, deploy producción
+- [x] **Fase 5 (parcial):** admin gestión señales, PWA tema claro, polling global, README Vercel
 
-## PostgreSQL (producción)
+## Deploy producción (Vercel + Neon)
+
+Guía completa: [`DEPLOY_VERCEL.md`](DEPLOY_VERCEL.md)
+
+Resumen:
+
+1. **Neon** — PostgreSQL gratis, copia `DATABASE_URL`
+2. **Vercel** — importa repo, Root `./`, framework Services
+3. **Variables Vercel:** `DATABASE_URL`, `SECRET_KEY`, `BOT_API_KEY`, `ADMIN_EMAILS`, `CORS_ORIGINS`
+4. **No configures** `NEXT_PUBLIC_API_URL` en Vercel (same-origin `/api/...`)
+
+## Panel admin
+
+Agrega tu email en `ADMIN_EMAILS`. En `/admin` puedes:
+
+- Ver stats globales y usuarios
+- **Eliminar señales** (ej. TEST de prueba)
+
+## PostgreSQL local (opcional)
 
 ```powershell
 docker compose up -d
 ```
 
-En `backend/.env`:
-
 ```
 DATABASE_URL=postgresql+psycopg://cashy:cashy@localhost:5432/cashy_trade
 ```
-
-## Deploy producción
-
-### Backend (Railway / Render / Docker)
-
-1. Usa `backend/Dockerfile` o despliega con Python 3.12
-2. Copia `backend/.env.production.example` → variables de entorno
-3. Conecta PostgreSQL y actualiza `DATABASE_URL`
-4. Define `ADMIN_EMAILS` con tu email
-
-### Frontend (Vercel)
-
-1. Importa la carpeta `frontend/`
-2. Variable: `NEXT_PUBLIC_API_URL=https://tu-backend.up.railway.app`
-3. Deploy
-
-### Bot local
-
-Mantén `CASHY_API_URL` apuntando al backend en producción y `CASHY_API_KEY` igual a `BOT_API_KEY`.
-
-## Panel admin
-
-Agrega tu email en `ADMIN_EMAILS`, reinicia backend e inicia sesión. Verás el enlace **Admin** en el header con stats globales y lista de usuarios.

@@ -1,12 +1,12 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_admin_user
 from app.models import Signal, Trade, User
-from app.schemas import AdminStatsOut, AdminUserOut
+from app.schemas import AdminStatsOut, AdminUserOut, SignalOut
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -44,3 +44,33 @@ def admin_users(user: User = Depends(get_admin_user), db: Session = Depends(get_
             )
         )
     return result
+
+
+@router.get("/signals", response_model=list[SignalOut])
+def admin_signals(
+    user: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+    limit: int = Query(default=100, le=500),
+):
+    signals = db.query(Signal).order_by(Signal.timestamp.desc()).limit(limit).all()
+    return [
+        SignalOut.model_validate({**SignalOut.model_validate(signal).model_dump(), "taken_by_user": False})
+        for signal in signals
+    ]
+
+
+@router.delete("/signals/{signal_id}")
+def delete_signal(
+    signal_id: int,
+    user: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    signal = db.query(Signal).filter(Signal.id == signal_id).first()
+    if not signal:
+        raise HTTPException(status_code=404, detail="Signal not found")
+
+    db.query(Trade).filter(Trade.signal_id == signal_id).update({Trade.signal_id: None})
+    db.query(Signal).filter(Signal.open_signal_id == signal_id).update({Signal.open_signal_id: None})
+    db.delete(signal)
+    db.commit()
+    return {"ok": True, "deleted_id": signal_id}

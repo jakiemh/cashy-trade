@@ -4,8 +4,8 @@
   "description": "Trading signals, journal and Cashy assistant",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#020617",
+  "background_color": "#ecfdf5",
+  "theme_color": "#ecfdf5",
   "orientation": "portrait-primary",
   "icons": [
     {

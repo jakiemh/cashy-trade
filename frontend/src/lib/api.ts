@@ -209,6 +209,11 @@ export const api = {
   equity: () => apiFetch<EquityPoint[]>("/api/dashboard/equity"),
   adminStats: () => apiFetch<AdminStats>("/api/admin/stats"),
   adminUsers: () => apiFetch<AdminUser[]>("/api/admin/users"),
+  adminSignals: () => apiFetch<Signal[]>("/api/admin/signals"),
+  deleteAdminSignal: (signalId: number) =>
+    apiFetch<{ ok: boolean; deleted_id: number }>(`/api/admin/signals/${signalId}`, {
+      method: "DELETE",
+    }),
   chat: (message: string) =>
     apiFetch<{ role: string; content: string; created_at: string }>("/api/chat", {
       method: "POST",

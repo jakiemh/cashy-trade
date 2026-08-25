@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell";
 import TradeEntryModal from "@/components/TradeEntryModal";
 import TradeExitModal from "@/components/TradeExitModal";
 import { Badge, formatMoney, formatPct } from "@/components/ui";
-import { requestNotificationPermission, useSignalPolling } from "@/hooks/useSignalPolling";
+import { useSignalPollingContext } from "@/contexts/SignalPollingContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { api, getToken, Signal, Trade } from "@/lib/api";
 
@@ -28,7 +28,7 @@ export default function SignalsPage() {
   const [entrySignal, setEntrySignal] = useState<Signal | null>(null);
   const [exitTrade, setExitTrade] = useState<Trade | null>(null);
   const [exitDefaults, setExitDefaults] = useState<{ exit_price?: number | null; exit_reason?: string | null }>();
-  const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const { notifyEnabled, enableNotifications, subscribe } = useSignalPollingContext();
 
   const queryParams = useMemo(() => {
     const params: Parameters<typeof api.signals>[0] = {};
@@ -52,7 +52,7 @@ export default function SignalsPage() {
     } finally {
       setLoading(false);
     }
-  }, [queryParams]);
+  }, [queryParams, t]);
 
   useEffect(() => {
     if (!getToken()) {
@@ -62,12 +62,15 @@ export default function SignalsPage() {
     load();
   }, [router, load]);
 
-  useSignalPolling(
-    useCallback(() => {
-      load();
-    }, [load]),
-    notifyEnabled
-  );
+  useEffect(() => {
+    return subscribe(() => {
+      void load();
+    });
+  }, [subscribe, load]);
+
+  async function toggleNotifications() {
+    await enableNotifications();
+  }
 
   async function openCierreExit(signal: Signal) {
     try {
@@ -84,11 +87,6 @@ export default function SignalsPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al buscar trade");
     }
-  }
-
-  async function toggleNotifications() {
-    const granted = await requestNotificationPermission();
-    setNotifyEnabled(granted);
   }
 
   return (

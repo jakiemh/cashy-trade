@@ -6,6 +6,7 @@ import CashyBubble from "@/components/CashyBubble";
 import CashyAvatar from "@/components/CashyAvatar";
 import SettingsGear from "@/components/SettingsGear";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useSignalPollingContext } from "@/contexts/SignalPollingContext";
 import { setToken } from "@/lib/api";
 import { DEFAULT_CASHY_AVATAR } from "@/lib/cashy";
 
@@ -13,6 +14,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t, isAdmin } = useLocale();
+  const { pendingCount } = useSignalPollingContext();
 
   const links = [
     { href: "/dashboard", label: t("nav.dashboard"), short: t("nav.home") },
@@ -59,9 +61,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               key={link.href}
               href={link.href}
-              className={pathname.startsWith(link.href) ? "nav-pill-active" : "nav-pill"}
+              className={`relative ${pathname.startsWith(link.href) ? "nav-pill-active" : "nav-pill"}`}
             >
               {link.label}
+              {link.href === "/signals" && pendingCount > 0 ? (
+                <span className="ml-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {pendingCount > 9 ? "9+" : pendingCount}
+                </span>
+              ) : null}
             </Link>
           ))}
         </nav>
@@ -75,11 +82,18 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex flex-col items-center justify-center px-2 py-3 text-xs ${
+              className={`relative flex flex-col items-center justify-center px-2 py-3 text-xs ${
                 pathname.startsWith(link.href) ? "font-semibold text-brand-600" : "text-slate-500"
               }`}
             >
-              <span>{link.short}</span>
+              <span className="relative">
+                {link.short}
+                {link.href === "/signals" && pendingCount > 0 ? (
+                  <span className="absolute -right-3 -top-2 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
+                ) : null}
+              </span>
             </Link>
           ))}
         </div>
