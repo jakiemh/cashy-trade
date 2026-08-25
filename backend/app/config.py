@@ -10,6 +10,16 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000"
     access_token_expire_minutes: int = 60 * 24 * 7
     admin_emails: str = ""
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    vapid_subject: str = "mailto:admin@cashy-trade.app"
+    app_base_url: str = "http://localhost:3000"
+    email_from: str = "Cashy Trade <noreply@cashy-trade.app>"
+    resend_api_key: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
 
     @property
     def resolved_database_url(self) -> str:

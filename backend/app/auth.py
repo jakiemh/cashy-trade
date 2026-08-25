@@ -58,3 +58,10 @@ def authenticate_user(db: Session, email: str, password: str) -> User | None:
         db.commit()
         db.refresh(user)
     return user
+
+
+def update_user_password(db: Session, user: User, new_password: str) -> User:
+    user.password_hash = hash_password(new_password)
+    db.commit()
+    db.refresh(user)
+    return user

@@ -130,3 +130,46 @@ def close_trade(
     db.commit()
     db.refresh(trade)
     return trade
+
+
+@router.post("/from-signal/{signal_id}", response_model=TradeOut)
+def create_trade_from_signal(
+    signal_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    signal = db.query(Signal).filter(Signal.id == signal_id).first()
+    if not signal:
+        raise HTTPException(status_code=404, detail="Signal not found")
+    if signal.type != "COMPRA":
+        raise HTTPException(status_code=400, detail="Only COMPRA signals can be quick-registered")
+
+    existing = (
+        db.query(Trade)
+        .filter(Trade.user_id == user.id, Trade.signal_id == signal_id)
+        .first()
+    )
+    if existing:
+        raise HTTPException(status_code=400, detail="Trade already registered for this signal")
+
+    if signal.entry_price is None:
+        raise HTTPException(status_code=400, detail="Signal has no entry price")
+
+    trade = Trade(
+        user_id=user.id,
+        signal_id=signal.id,
+        symbol=signal.symbol.upper(),
+        strategy=signal.strategy,
+        setup_name=signal.setup_name,
+        entry_price=signal.entry_price,
+        entry_qty=signal.entry_qty or 10,
+        entry_at=signal.timestamp,
+        stop_loss=signal.stop_loss,
+        take_profit=signal.take_profit,
+        notes="Entrada rápida desde señal",
+        status="open",
+    )
+    db.add(trade)
+    db.commit()
+    db.refresh(trade)
+    return trade

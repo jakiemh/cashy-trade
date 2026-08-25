@@ -19,6 +19,20 @@ class UserLogin(BaseModel):
     password: str
 
 
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordIn(BaseModel):
+    token: str = Field(min_length=20)
+    password: str = Field(min_length=8)
+
+
+class OkMessage(BaseModel):
+    ok: bool = True
+    message: str
+
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr
@@ -60,6 +74,7 @@ class SignalIn(BaseModel):
     reason: str | None = None
     current_price: float | None = None
     distance_to_stop_pct: float | None = None
+    entry_qty: float | None = None
 
 
 class SignalOut(BaseModel):
@@ -80,6 +95,7 @@ class SignalOut(BaseModel):
     reason: str | None
     current_price: float | None
     distance_to_stop_pct: float | None
+    entry_qty: float | None = None
     is_active: bool
     open_signal_id: int | None
     taken_by_user: bool = False

@@ -1,5 +1,6 @@
 "use client";
 
+import InstallPwaBanner from "@/components/InstallPwaBanner";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import CashyBubble from "@/components/CashyBubble";
@@ -74,7 +75,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
 
-      <main className="page-main mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">{children}</main>
+      <main className="page-main mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
+        <InstallPwaBanner />
+        {children}
+      </main>
 
       <nav className="bottom-nav fixed inset-x-0 bottom-0 z-40 md:hidden">
         <div className="mx-auto grid max-w-lg grid-cols-4">

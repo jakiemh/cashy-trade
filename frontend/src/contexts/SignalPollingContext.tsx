@@ -12,14 +12,15 @@ import {
 import { usePathname } from "next/navigation";
 import { Signal, api, getToken } from "@/lib/api";
 import { notifyNewSignals, requestNotificationPermission } from "@/hooks/useSignalPolling";
+import { buildSignalsWebSocketUrl, registerServiceWorker, subscribeToPush } from "@/lib/push";
 
-const POLL_VISIBLE_MS = 15_000;
-const POLL_HIDDEN_MS = 45_000;
+const POLL_MS = 5_000;
 
 type SignalPollingContextValue = {
   pendingCount: number;
   clearPending: () => void;
   notifyEnabled: boolean;
+  wsConnected: boolean;
   enableNotifications: () => Promise<boolean>;
   subscribe: (listener: (signals: Signal[]) => void) => () => void;
 };
@@ -30,9 +31,11 @@ export function SignalPollingProvider({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const [pendingCount, setPendingCount] = useState(0);
   const [notifyEnabled, setNotifyEnabled] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
   const sinceRef = useRef<string | null>(null);
   const knownIdsRef = useRef<Set<number>>(new Set());
   const listenersRef = useRef(new Set<(signals: Signal[]) => void>());
+  const wsRef = useRef<WebSocket | null>(null);
 
   const subscribe = useCallback((listener: (signals: Signal[]) => void) => {
     listenersRef.current.add(listener);
@@ -41,16 +44,56 @@ export function SignalPollingProvider({ children }: { children: React.ReactNode 
 
   const clearPending = useCallback(() => setPendingCount(0), []);
 
+  const dispatchFresh = useCallback(
+    (fresh: Signal[], fromPush = false) => {
+      if (!fresh.length) return;
+      fresh.forEach((signal) => knownIdsRef.current.add(signal.id));
+      sinceRef.current = fresh[0].timestamp;
+      setPendingCount((count) => count + fresh.length);
+      if (notifyEnabled && !fromPush) notifyNewSignals(fresh);
+      listenersRef.current.forEach((listener) => listener(fresh));
+    },
+    [notifyEnabled]
+  );
+
+  const seedKnown = useCallback(async () => {
+    if (!getToken()) return;
+    try {
+      const incoming = await api.signals();
+      incoming.forEach((signal) => knownIdsRef.current.add(signal.id));
+      if (incoming[0]) sinceRef.current = incoming[0].timestamp;
+    } catch {
+      // ignore seed errors
+    }
+  }, []);
+
+  const pollOnce = useCallback(async () => {
+    if (!getToken() || wsConnected) return;
+    try {
+      const params = sinceRef.current ? { since: sinceRef.current } : undefined;
+      const incoming = await api.signals(params);
+      const fresh = incoming.filter((signal) => !knownIdsRef.current.has(signal.id));
+      dispatchFresh(fresh);
+    } catch {
+      // ignore polling errors
+    }
+  }, [dispatchFresh, wsConnected]);
+
   const enableNotifications = useCallback(async () => {
     const granted = await requestNotificationPermission();
-    setNotifyEnabled(granted);
-    return granted;
+    let pushOk = false;
+    try {
+      pushOk = await subscribeToPush();
+    } catch {
+      pushOk = false;
+    }
+    const enabled = granted || pushOk;
+    setNotifyEnabled(enabled);
+    return enabled;
   }, []);
 
   useEffect(() => {
-    if (pathname.startsWith("/signals")) {
-      clearPending();
-    }
+    if (pathname.startsWith("/signals")) clearPending();
   }, [pathname, clearPending]);
 
   useEffect(() => {
@@ -58,68 +101,65 @@ export function SignalPollingProvider({ children }: { children: React.ReactNode 
       sinceRef.current = null;
       knownIdsRef.current = new Set();
       setPendingCount(0);
+      setWsConnected(false);
+      wsRef.current?.close();
+      wsRef.current = null;
       return;
     }
 
     let cancelled = false;
-    let timer: number | undefined;
+    let pollTimer: number | undefined;
 
-    async function poll(isInitial: boolean) {
-      if (!getToken()) return;
-      try {
-        const params = sinceRef.current ? { since: sinceRef.current } : undefined;
-        const incoming = await api.signals(params);
-        if (cancelled) return;
+    seedKnown().then(() => {
+      if (cancelled) return;
+      void registerServiceWorker();
 
-        if (isInitial) {
-          incoming.forEach((signal) => knownIdsRef.current.add(signal.id));
-          if (incoming[0]) sinceRef.current = incoming[0].timestamp;
-          return;
-        }
+      const wsUrl = buildSignalsWebSocketUrl();
+      if (wsUrl) {
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
 
-        const fresh = incoming.filter((signal) => !knownIdsRef.current.has(signal.id));
-        if (!fresh.length) return;
+        ws.onopen = () => {
+          if (!cancelled) setWsConnected(true);
+        };
 
-        fresh.forEach((signal) => knownIdsRef.current.add(signal.id));
-        sinceRef.current = fresh[0].timestamp;
-        setPendingCount((count) => count + fresh.length);
-        if (notifyEnabled) notifyNewSignals(fresh);
-        listenersRef.current.forEach((listener) => listener(fresh));
-      } catch {
-        // ignore transient polling errors
+        ws.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(String(event.data)) as Signal;
+            if (!payload?.id || knownIdsRef.current.has(payload.id)) return;
+            dispatchFresh([payload], true);
+          } catch {
+            // ignore malformed messages
+          }
+        };
+
+        ws.onclose = () => {
+          setWsConnected(false);
+          wsRef.current = null;
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
       }
-    }
 
-    function scheduleNext(delay: number) {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(async () => {
-        await poll(false);
-        if (!cancelled) {
-          scheduleNext(document.hidden ? POLL_HIDDEN_MS : POLL_VISIBLE_MS);
-        }
-      }, delay);
-    }
-
-    poll(true).then(() => {
-      if (!cancelled) scheduleNext(POLL_VISIBLE_MS);
+      pollTimer = window.setInterval(() => {
+        void pollOnce();
+      }, POLL_MS);
     });
 
-    function onVisibilityChange() {
-      if (cancelled) return;
-      scheduleNext(document.hidden ? POLL_HIDDEN_MS : POLL_VISIBLE_MS);
-    }
-
-    document.addEventListener("visibilitychange", onVisibilityChange);
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.clearInterval(pollTimer);
+      wsRef.current?.close();
+      wsRef.current = null;
+      setWsConnected(false);
     };
-  }, [notifyEnabled, pathname]);
+  }, [seedKnown, pollOnce, dispatchFresh, pathname]);
 
   const value = useMemo(
-    () => ({ pendingCount, clearPending, notifyEnabled, enableNotifications, subscribe }),
-    [pendingCount, clearPending, notifyEnabled, enableNotifications, subscribe]
+    () => ({ pendingCount, clearPending, notifyEnabled, wsConnected, enableNotifications, subscribe }),
+    [pendingCount, clearPending, notifyEnabled, wsConnected, enableNotifications, subscribe]
   );
 
   return <SignalPollingContext.Provider value={value}>{children}</SignalPollingContext.Provider>;

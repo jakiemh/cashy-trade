@@ -24,6 +24,7 @@ export type Signal = {
   reason?: string | null;
   current_price?: number | null;
   distance_to_stop_pct?: number | null;
+  entry_qty?: number | null;
   is_active: boolean;
   open_signal_id?: number | null;
   taken_by_user: boolean;
@@ -162,6 +163,16 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
+  forgotPassword: (email: string) =>
+    apiFetch<{ ok: boolean; message: string }>("/api/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, password: string) =>
+    apiFetch<{ ok: boolean; message: string }>("/api/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    }),
   me: () => apiFetch<User>("/api/auth/me"),
   signals: (params?: SignalFilters) => {
     const query = new URLSearchParams();
@@ -180,6 +191,8 @@ export const api = {
   },
   createTrade: (payload: Record<string, unknown>) =>
     apiFetch<Trade>("/api/trades", { method: "POST", body: JSON.stringify(payload) }),
+  createTradeFromSignal: (signalId: number) =>
+    apiFetch<Trade>(`/api/trades/from-signal/${signalId}`, { method: "POST" }),
   closeTrade: (tradeId: number, payload: Record<string, unknown>) =>
     apiFetch<Trade>(`/api/trades/${tradeId}/close`, {
       method: "POST",
@@ -213,6 +226,12 @@ export const api = {
   deleteAdminSignal: (signalId: number) =>
     apiFetch<{ ok: boolean; deleted_id: number }>(`/api/admin/signals/${signalId}`, {
       method: "DELETE",
+    }),
+  pushVapidKey: () => apiFetch<{ public_key: string | null; enabled: boolean }>("/api/push/vapid-public-key"),
+  pushSubscribe: (payload: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
+    apiFetch<{ ok: boolean }>("/api/push/subscribe", {
+      method: "POST",
+      body: JSON.stringify(payload),
     }),
   chat: (message: string) =>
     apiFetch<{ role: string; content: string; created_at: string }>("/api/chat", {

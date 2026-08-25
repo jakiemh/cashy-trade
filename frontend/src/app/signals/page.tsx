@@ -28,7 +28,8 @@ export default function SignalsPage() {
   const [entrySignal, setEntrySignal] = useState<Signal | null>(null);
   const [exitTrade, setExitTrade] = useState<Trade | null>(null);
   const [exitDefaults, setExitDefaults] = useState<{ exit_price?: number | null; exit_reason?: string | null }>();
-  const { notifyEnabled, enableNotifications, subscribe } = useSignalPollingContext();
+  const [quickEnteringId, setQuickEnteringId] = useState<number | null>(null);
+  const { notifyEnabled, enableNotifications, subscribe, wsConnected } = useSignalPollingContext();
 
   const queryParams = useMemo(() => {
     const params: Parameters<typeof api.signals>[0] = {};
@@ -72,6 +73,19 @@ export default function SignalsPage() {
     await enableNotifications();
   }
 
+  async function quickEnter(signal: Signal) {
+    setQuickEnteringId(signal.id);
+    setError("");
+    try {
+      await api.createTradeFromSignal(signal.id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("common.error"));
+    } finally {
+      setQuickEnteringId(null);
+    }
+  }
+
   async function openCierreExit(signal: Signal) {
     try {
       const match = await api.matchCierreTrade(signal.id);
@@ -96,7 +110,10 @@ export default function SignalsPage() {
           <h2 className="text-xl font-semibold text-slate-800 sm:text-2xl">{t("signals.title")}</h2>
           <p className="mt-1 text-sm text-muted">{t("signals.subtitle")}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`text-xs ${wsConnected ? "text-emerald-600" : "text-muted"}`}>
+            {wsConnected ? t("signals.liveWs") : t("signals.livePoll")}
+          </span>
           <button type="button" className="btn-secondary" onClick={() => load()} disabled={loading}>
             {loading ? t("common.updating") : t("common.refresh")}
           </button>
@@ -188,6 +205,7 @@ export default function SignalsPage() {
             {signal.type === "COMPRA" ? (
               <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
                 <p>{t("signals.entry")}: {formatMoney(signal.entry_price)}</p>
+                {signal.entry_qty ? <p>Cantidad: {signal.entry_qty}</p> : null}
                 <p>Stop: {formatMoney(signal.stop_loss)} ({formatPct(signal.stop_pct)})</p>
                 <p>Objetivo: {formatMoney(signal.take_profit)} ({formatPct(signal.tp_pct)})</p>
                 <p>R:R {signal.rr_ratio}:1</p>
@@ -209,9 +227,26 @@ export default function SignalsPage() {
             ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
               {signal.type === "COMPRA" && !signal.taken_by_user ? (
-                <button type="button" className="btn-primary" onClick={() => setEntrySignal(signal)}>
-                  {t("signals.registerTrade")}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    disabled={quickEnteringId === signal.id || !signal.entry_price}
+                    onClick={() => quickEnter(signal)}
+                  >
+                    {quickEnteringId === signal.id
+                      ? t("common.updating")
+                      : signal.entry_qty
+                        ? t("signals.quickEnterQty", {
+                            qty: String(signal.entry_qty),
+                            price: signal.entry_price?.toFixed(2) ?? "—",
+                          })
+                        : t("signals.quickEnter")}
+                  </button>
+                  <button type="button" className="btn-secondary" onClick={() => setEntrySignal(signal)}>
+                    {t("signals.registerTrade")}
+                  </button>
+                </>
               ) : null}
               {signal.type === "CIERRE" ? (
                 <button type="button" className="btn-secondary" onClick={() => openCierreExit(signal)}>

@@ -35,6 +35,7 @@ def create_signal(db: Session, payload: SignalIn) -> Signal:
         reason=payload.reason,
         current_price=payload.current_price,
         distance_to_stop_pct=payload.distance_to_stop_pct,
+        entry_qty=payload.entry_qty,
     )
 
     if signal.type == "COMPRA":

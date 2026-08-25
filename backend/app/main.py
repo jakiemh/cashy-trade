@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, engine
 from app.db_migrate import ensure_schema
-from app.routes import admin, app_routes, auth, chat, signals, trades
+from app.routes import admin, app_routes, auth, chat, push, signals, trades, ws
 
 Base.metadata.create_all(bind=engine)
 ensure_schema()
@@ -25,6 +25,8 @@ app.include_router(trades.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")
 app.include_router(admin.router, prefix="/api")
 app.include_router(app_routes.router, prefix="/api")
+app.include_router(push.router, prefix="/api")
+app.include_router(ws.router, prefix="/api")
 
 
 @app.get("/health")

@@ -49,6 +49,26 @@ INTENTS = [
         "patterns": [r"stats?", r"estadísticas?", r"estadisticas?", r"dashboard"],
         "handler": "stats",
     },
+    {
+        "name": "pnl_today",
+        "patterns": [r"pnl\s*hoy", r"p&l\s*hoy", r"ganancia\s*hoy", r"p&l\s*today", r"pnl\s*today"],
+        "handler": "pnl_today",
+    },
+    {
+        "name": "signals_symbol",
+        "patterns": [r"señales?\s+([A-Za-z]{1,10})", r"signals?\s+([A-Za-z]{1,10})"],
+        "handler": "signals_symbol",
+    },
+    {
+        "name": "last_trades",
+        "patterns": [r"últimos?\s+trades?", r"ultimos?\s+trades?", r"last\s+trades?", r"bitácora\s+reciente"],
+        "handler": "last_trades",
+    },
+    {
+        "name": "journal_symbol",
+        "patterns": [r"bitácora\s+([A-Za-z]{1,10})", r"bitacora\s+([A-Za-z]{1,10})", r"journal\s+([A-Za-z]{1,10})"],
+        "handler": "journal_symbol",
+    },
 ]
 
 
@@ -129,7 +149,11 @@ def process_message(db: Session, user_id: int, locale: str, message: str) -> str
                 "- open trades\n"
                 "- precio AAPL\n"
                 "- noticias NVDA\n"
-                "- stats"
+                "- stats\n"
+                "- pnl hoy\n"
+                "- señales MSFT\n"
+                "- últimos trades\n"
+                "- bitácora AAPL"
             )
         return (
             "Hola, soy Cashy. Prueba:\n"
@@ -139,7 +163,11 @@ def process_message(db: Session, user_id: int, locale: str, message: str) -> str
             "- trades abiertos\n"
             "- precio AAPL\n"
             "- noticias NVDA\n"
-            "- stats"
+            "- stats\n"
+            "- pnl hoy\n"
+            "- señales MSFT\n"
+            "- últimos trades\n"
+            "- bitácora AAPL"
         )
 
     if handler == "win_rate":
@@ -247,6 +275,80 @@ def process_message(db: Session, user_id: int, locale: str, message: str) -> str
             f"- Trades abiertos: {stats['open_trades']}\n"
             f"- Señales hoy: {stats['signals_today']}"
         )
+
+    if handler == "pnl_today":
+        today = datetime.utcnow().date()
+        closed_today = (
+            db.query(Trade)
+            .filter(
+                Trade.user_id == user_id,
+                Trade.status == "closed",
+                Trade.exit_at.isnot(None),
+            )
+            .all()
+        )
+        closed_today = [t for t in closed_today if t.exit_at.date() == today]
+        pnl = sum(t.pnl_usd or 0 for t in closed_today)
+        return _t(
+            locale,
+            f"P&L de hoy: ${pnl:.2f} en {len(closed_today)} trade(s) cerrado(s).",
+            f"Today's P&L: ${pnl:.2f} across {len(closed_today)} closed trade(s).",
+        )
+
+    if handler == "signals_symbol" and match:
+        symbol = match.group(1).upper()
+        rows = (
+            db.query(Signal)
+            .filter(Signal.symbol == symbol)
+            .order_by(Signal.timestamp.desc())
+            .limit(8)
+            .all()
+        )
+        if not rows:
+            return _t(locale, f"No hay señales de {symbol}.", f"No signals for {symbol}.")
+        lines = [f"- [{s.type}] {s.timestamp.strftime('%Y-%m-%d %H:%M')}" for s in rows]
+        header = _t(locale, f"Señales de {symbol}:", f"Signals for {symbol}:")
+        return header + "\n" + "\n".join(lines)
+
+    if handler == "last_trades":
+        trades = (
+            db.query(Trade)
+            .filter(Trade.user_id == user_id)
+            .order_by(Trade.entry_at.desc())
+            .limit(5)
+            .all()
+        )
+        if not trades:
+            return _t(locale, "No tienes trades en la bitácora.", "No trades in your journal.")
+        lines = []
+        for t in trades:
+            status = t.status.upper()
+            pnl = f" | P&L ${t.pnl_usd:.2f}" if t.status == "closed" and t.pnl_usd is not None else ""
+            lines.append(f"- {t.symbol} {status} @ ${t.entry_price:.2f}{pnl}")
+        header = _t(locale, "Últimos trades:", "Recent trades:")
+        return header + "\n" + "\n".join(lines)
+
+    if handler == "journal_symbol" and match:
+        symbol = match.group(1).upper()
+        trades = (
+            db.query(Trade)
+            .filter(Trade.user_id == user_id, Trade.symbol == symbol)
+            .order_by(Trade.entry_at.desc())
+            .limit(8)
+            .all()
+        )
+        if not trades:
+            return _t(locale, f"No tienes trades de {symbol}.", f"No trades for {symbol}.")
+        lines = []
+        for t in trades:
+            if t.status == "closed":
+                lines.append(
+                    f"- {t.entry_at.strftime('%Y-%m-%d')}: ${t.entry_price:.2f} → ${t.exit_price:.2f} ({(t.pnl_pct or 0):+.1f}%)"
+                )
+            else:
+                lines.append(f"- ABIERTO {t.entry_at.strftime('%Y-%m-%d')}: ${t.entry_price:.2f} x {t.entry_qty:g}")
+        header = _t(locale, f"Bitácora {symbol}:", f"Journal {symbol}:")
+        return header + "\n" + "\n".join(lines)
 
     return _t(
         locale,
