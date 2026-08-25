@@ -19,20 +19,6 @@ class UserLogin(BaseModel):
     password: str
 
 
-class ForgotPasswordIn(BaseModel):
-    email: EmailStr
-
-
-class ResetPasswordIn(BaseModel):
-    token: str = Field(min_length=20)
-    password: str = Field(min_length=8)
-
-
-class OkMessage(BaseModel):
-    ok: bool = True
-    message: str
-
-
 class UserOut(BaseModel):
     id: int
     email: EmailStr

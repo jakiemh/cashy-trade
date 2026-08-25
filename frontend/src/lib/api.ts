@@ -162,16 +162,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
-  forgotPassword: (email: string) =>
-    apiFetch<{ ok: boolean; message: string }>("/api/auth/forgot-password", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-    }),
-  resetPassword: (token: string, password: string) =>
-    apiFetch<{ ok: boolean; message: string }>("/api/auth/reset-password", {
-      method: "POST",
-      body: JSON.stringify({ token, password }),
-    }),
   me: () => apiFetch<User>("/api/auth/me"),
   signals: (params?: SignalFilters) => {
     const query = new URLSearchParams();

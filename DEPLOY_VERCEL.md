@@ -17,9 +17,6 @@ En tu proyecto Vercel → **Settings → Environment Variables**:
 | `BOT_API_KEY` | Misma clave que en tu bot Python |
 | `ADMIN_EMAILS` | tu@email.com |
 | `CORS_ORIGINS` | `https://TU-APP.vercel.app` |
-| `APP_BASE_URL` | `https://TU-APP.vercel.app` (enlaces de reset de contraseña) |
-| `RESEND_API_KEY` | (opcional) API key de [Resend](https://resend.com) para emails |
-| `EMAIL_FROM` | `Cashy Trade <onboarding@resend.dev>` o tu dominio verificado |
 | `VAPID_PUBLIC_KEY` | (opcional) clave pública push — ver abajo |
 | `VAPID_PRIVATE_KEY` | (opcional) clave privada push |
 | `VAPID_SUBJECT` | `mailto:tu@email.com` |
@@ -33,14 +30,6 @@ python scripts/generate_vapid_keys.py
 ```
 
 Copia las 3 variables a Vercel y redeploy. En la app, entra a **Señales → Alertas** para activar permisos + suscripción push.
-
-**Recuperar contraseña:** requiere email configurado. Opción simple con Resend (gratis):
-
-1. Crea cuenta en resend.com y verifica un dominio o usa `onboarding@resend.dev` en pruebas.
-2. Pon `RESEND_API_KEY` y `EMAIL_FROM` en Vercel.
-3. `APP_BASE_URL` debe ser tu URL pública (ej. `https://cashy-trade.vercel.app`).
-
-Alternativa SMTP (Gmail app password): `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASSWORD`.
 
 **PWA instalable:** manifest + service worker + banner "Instalar" en la app. En iPhone: Safari → Compartir → Añadir a pantalla de inicio.
 

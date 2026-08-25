@@ -58,11 +58,6 @@ export default function LoginPage() {
             required
           />
           {error ? <p className="text-sm text-rose-600">{error}</p> : null}
-          <div className="text-right">
-            <Link className="text-sm font-medium text-brand-600 hover:underline" href="/forgot-password">
-              {t("auth.forgotPassword")}
-            </Link>
-          </div>
           <button className="btn-primary w-full py-3" disabled={loading} type="submit">
             {loading ? t("auth.loggingIn") : t("auth.login")}
           </button>
