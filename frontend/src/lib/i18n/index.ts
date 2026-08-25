@@ -1,6 +1,10 @@
 export type Locale = "es" | "en";
 
-export type Messages = typeof import("./es").es;
+type DeepString<T> = {
+  [K in keyof T]: T[K] extends string ? string : DeepString<T[K]>;
+};
+
+export type Messages = DeepString<typeof import("./es").es>;
 
 export function translate(messages: Messages, key: string): string {
   const parts = key.split(".");

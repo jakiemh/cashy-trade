@@ -24,6 +24,8 @@ En tu proyecto Vercel → **Settings → Environment Variables**:
 
 - Root Directory: `./` (raíz del repo)
 - Framework: **Services** (detectado por `vercel.json`)
+- **Node.js Version:** `22.x` (Settings → General → Node.js Version)
+- **Región:** Vercel usa **US East (iad1)** por defecto — compatible con Neon Ohio
 - Conecta el repo `jakiemh/cashy-trade` y deploy
 
 Rutas:

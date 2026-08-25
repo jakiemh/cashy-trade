@@ -1,6 +1,6 @@
-import type { es } from "./es";
+import type { Messages } from "./index";
 
-export const en: typeof es = {
+export const en: Messages = {
   app: {
     title: "Cashy Trade",
     subtitle: "Trading Command Center",
