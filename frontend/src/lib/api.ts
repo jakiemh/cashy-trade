@@ -112,10 +112,19 @@ export type WatchlistItem = {
   news?: NewsItem[];
 };
 
-const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL ??
-  (process.env.NODE_ENV === "development" ? "http://localhost:8001" : "")
-).replace(/\/$/, "");
+function resolveApiUrl(): string {
+  const configured = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/$/, "");
+  if (process.env.NODE_ENV === "development") {
+    return configured || "http://localhost:8001";
+  }
+  // In production, never call localhost from the browser (stale local .env.local).
+  if (!configured || /localhost|127\.0\.0\.1/i.test(configured)) {
+    return "";
+  }
+  return configured;
+}
+
+const API_URL = resolveApiUrl();
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
