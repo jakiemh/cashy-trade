@@ -10,6 +10,7 @@ __pycache__/
 backend/.env
 frontend/.env.local
 frontend/.env*.local
+scripts/.production-secrets.local
 # Build / runtime
 .next/
 backend/cashy_trade.db
@@ -18,3 +19,5 @@ backend/cashy_trade.db
 # OS
 .DS_Store
 Thumbs.db
+.vercel
+.env*
