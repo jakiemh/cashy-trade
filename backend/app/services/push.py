@@ -11,11 +11,21 @@ logger = logging.getLogger(__name__)
 
 
 def vapid_configured() -> bool:
-    return bool(settings.vapid_public_key and settings.vapid_private_key and settings.vapid_subject)
+    public = settings.vapid_public_key or ""
+    private = settings.vapid_private_key or ""
+    subject = settings.vapid_subject or ""
+    if not public or not private or not subject:
+        return False
+    if "ECPublicKey object" in public or public.startswith("<"):
+        return False
+    return True
 
 
 def get_vapid_public_key() -> str | None:
-    return settings.vapid_public_key or None
+    public = settings.vapid_public_key or None
+    if not public or "ECPublicKey object" in public:
+        return None
+    return public
 
 
 def notify_users_new_signal(db: Session, signal: dict[str, Any]) -> int:
