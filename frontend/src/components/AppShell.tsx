@@ -72,7 +72,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell">
       <header className="glass-header">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:py-4">
+        <div className="safe-x mx-auto flex max-w-6xl items-center justify-between gap-3 py-3 sm:py-4">
           <div className="flex min-w-0 items-center gap-3">
             <CashyAvatar src={DEFAULT_CASHY_AVATAR} size={44} />
             <div className="min-w-0">
@@ -103,7 +103,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        <nav className="mx-auto hidden max-w-6xl gap-2 px-4 pb-3 md:flex">
+        <nav className="safe-x mx-auto hidden max-w-6xl gap-2 pb-3 md:flex">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -121,7 +121,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
 
-      <main className="page-main mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
+      <main className="page-main safe-x mx-auto max-w-6xl py-4 sm:py-6">
         <InstallPwaBanner />
         {children}
       </main>

@@ -34,8 +34,17 @@ select {
     @apply min-h-[100dvh] bg-app-gradient text-slate-800;
   }
 
+  .auth-screen {
+    min-height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
   .glass-header {
     @apply sticky top-0 z-40 border-b border-white/70 bg-header-gradient backdrop-blur-xl shadow-sm;
+    padding-top: env(safe-area-inset-top);
   }
 
   .glass-card {
@@ -92,7 +101,14 @@ select {
 
   .bottom-nav {
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     @apply border-t border-emerald-100/90 bg-white/95 shadow-[0_-8px_32px_rgba(16,185,129,0.1)] backdrop-blur-xl;
+  }
+
+  .safe-x {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
   }
 
   .bottom-nav-item {

@@ -33,7 +33,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-[100dvh] items-center justify-center bg-app-gradient px-4">
+    <div className="auth-screen flex items-center justify-center bg-app-gradient">
       <div className="glass-card w-full max-w-md p-8">
         <div className="flex flex-col items-center text-center">
           <CashyAvatar src={CASHY_AVATARS[1].path} size={96} />
