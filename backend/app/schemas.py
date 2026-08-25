@@ -74,7 +74,6 @@ class SignalIn(BaseModel):
     reason: str | None = None
     current_price: float | None = None
     distance_to_stop_pct: float | None = None
-    entry_qty: float | None = None
 
 
 class SignalOut(BaseModel):
@@ -95,7 +94,6 @@ class SignalOut(BaseModel):
     reason: str | None
     current_price: float | None
     distance_to_stop_pct: float | None
-    entry_qty: float | None = None
     is_active: bool
     open_signal_id: int | None
     taken_by_user: bool = False

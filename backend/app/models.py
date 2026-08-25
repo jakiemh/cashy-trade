@@ -62,7 +62,6 @@ class Signal(Base):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     open_signal_id: Mapped[int | None] = mapped_column(ForeignKey("signals.id"), nullable=True)
-    entry_qty: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     trades: Mapped[list["Trade"]] = relationship(back_populates="signal")
 

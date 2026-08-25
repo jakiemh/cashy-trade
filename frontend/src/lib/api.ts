@@ -24,7 +24,6 @@ export type Signal = {
   reason?: string | null;
   current_price?: number | null;
   distance_to_stop_pct?: number | null;
-  entry_qty?: number | null;
   is_active: boolean;
   open_signal_id?: number | null;
   taken_by_user: boolean;
@@ -191,8 +190,6 @@ export const api = {
   },
   createTrade: (payload: Record<string, unknown>) =>
     apiFetch<Trade>("/api/trades", { method: "POST", body: JSON.stringify(payload) }),
-  createTradeFromSignal: (signalId: number) =>
-    apiFetch<Trade>(`/api/trades/from-signal/${signalId}`, { method: "POST" }),
   closeTrade: (tradeId: number, payload: Record<string, unknown>) =>
     apiFetch<Trade>(`/api/trades/${tradeId}/close`, {
       method: "POST",
