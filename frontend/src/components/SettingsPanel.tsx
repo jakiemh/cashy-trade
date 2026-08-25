@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { FormEvent, useEffect, useState } from "react";
 import CashyAvatar from "@/components/CashyAvatar";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -77,13 +76,13 @@ export default function SettingsPanel({ onSaved, compact = false }: SettingsPane
                     : "border-emerald-100 bg-white hover:border-emerald-200"
                 }`}
               >
-                <Image
-                  src={avatar.path}
-                  alt={avatar.name}
-                  width={96}
-                  height={96}
-                  className="mx-auto rounded-full border border-emerald-100 object-cover"
-                />
+                <div className="flex justify-center">
+                  <CashyAvatar
+                    src={avatar.path}
+                    size={96}
+                    className={selected ? "border-brand-500" : "border-emerald-200"}
+                  />
+                </div>
                 <p className="mt-2 text-sm font-medium text-slate-800">{avatar.name}</p>
                 <p className="mt-1 text-xs text-muted">{avatar.description}</p>
               </button>
