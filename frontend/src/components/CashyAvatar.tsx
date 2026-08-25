@@ -20,6 +20,7 @@ export default function CashyAvatar({
       alt={alt}
       width={size}
       height={size}
+      unoptimized
       className={`rounded-full border-2 border-emerald-300/80 object-cover shadow-lg shadow-emerald-200/40 ${className}`}
     />
   );
