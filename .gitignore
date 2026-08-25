@@ -11,6 +11,7 @@ backend/.env
 frontend/.env.local
 frontend/.env*.local
 scripts/.production-secrets.local
+scripts/vapid-output.txt
 # Build / runtime
 .next/
 backend/cashy_trade.db
