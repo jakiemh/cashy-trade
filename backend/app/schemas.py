@@ -165,6 +165,14 @@ class AdminUserOut(BaseModel):
     trade_count: int
 
 
+class AdminUserUpdate(BaseModel):
+    email: EmailStr | None = None
+    password: str | None = Field(default=None, min_length=8)
+    name: str | None = None
+    locale: str | None = None
+    is_admin: bool | None = None
+
+
 class TradeMatchOut(BaseModel):
     trade: TradeOut | None
     cierre_signal_id: int
