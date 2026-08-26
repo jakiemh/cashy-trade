@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_admin_user
-from app.models import Signal, Trade, User
+from app.models import ChatMessage, PushSubscription, Signal, Trade, User, UserSettings, WatchlistItem
 from app.schemas import AdminStatsOut, AdminUserOut, AdminUserUpdate, SignalOut
+from app.auth import hash_password
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -59,6 +60,16 @@ def update_user(
     if payload.name is not None:
         target.name = payload.name.strip()
 
+    if payload.email is not None:
+        normalized = payload.email.lower().strip()
+        existing = db.query(User).filter(User.email == normalized, User.id != target.id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        target.email = normalized
+
+    if payload.password is not None:
+        target.password_hash = hash_password(payload.password)
+
     if payload.locale is not None:
         locale = payload.locale.lower()
         if locale not in {"es", "en"}:
@@ -73,6 +84,28 @@ def update_user(
     db.commit()
     db.refresh(target)
     return _admin_user_out(db, target)
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    admin: User = Depends(get_admin_user),
+    db: Session = Depends(get_db),
+):
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.id == admin.id:
+        raise HTTPException(status_code=400, detail="Cannot delete your own account")
+
+    db.query(PushSubscription).filter(PushSubscription.user_id == user_id).delete()
+    db.query(ChatMessage).filter(ChatMessage.user_id == user_id).delete()
+    db.query(WatchlistItem).filter(WatchlistItem.user_id == user_id).delete()
+    db.query(Trade).filter(Trade.user_id == user_id).delete()
+    db.query(UserSettings).filter(UserSettings.user_id == user_id).delete()
+    db.delete(target)
+    db.commit()
+    return {"ok": True, "deleted_id": user_id}
 
 
 @router.get("/signals", response_model=list[SignalOut])

@@ -159,6 +159,10 @@ export const es = {
     userUpdated: "Usuario actualizado",
     isAdmin: "Administrador",
     actionsCol: "Acciones",
+    deleteUser: "Eliminar usuario",
+    deleteUserConfirm: "¿Eliminar a {email}? Se borrarán sus trades, watchlist y datos asociados.",
+    passwordHint: "Dejar vacío para no cambiar",
+    userDeleted: "Usuario eliminado",
   },
   trade: {
     registerTitle: "Registrar trade",

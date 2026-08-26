@@ -63,6 +63,13 @@ export default function AdminPage() {
     setUsers((current) => current.map((item) => (item.id === updated.id ? updated : item)));
   }
 
+  function handleUserDeleted(userId: number) {
+    setUsers((current) => current.filter((item) => item.id !== userId));
+    if (stats) {
+      setStats({ ...stats, total_users: Math.max(0, stats.total_users - 1) });
+    }
+  }
+
   return (
     <AppShell>
       <PageHeader title={t("admin.title")} subtitle={t("admin.subtitle")} />
@@ -164,6 +171,7 @@ export default function AdminPage() {
         open={Boolean(editingUser)}
         onClose={() => setEditingUser(null)}
         onSuccess={handleUserUpdated}
+        onDelete={handleUserDeleted}
       />
     </AppShell>
   );

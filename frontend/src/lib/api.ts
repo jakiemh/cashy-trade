@@ -211,11 +211,21 @@ export const api = {
   adminUsers: () => apiFetch<AdminUser[]>("/api/admin/users"),
   updateAdminUser: (
     userId: number,
-    payload: { name?: string; locale?: string; is_admin?: boolean }
+    payload: {
+      email?: string;
+      password?: string;
+      name?: string;
+      locale?: string;
+      is_admin?: boolean;
+    }
   ) =>
     apiFetch<AdminUser>(`/api/admin/users/${userId}`, {
       method: "PATCH",
       body: JSON.stringify(payload),
+    }),
+  deleteAdminUser: (userId: number) =>
+    apiFetch<{ ok: boolean; deleted_id: number }>(`/api/admin/users/${userId}`, {
+      method: "DELETE",
     }),
   adminSignals: () => apiFetch<Signal[]>("/api/admin/signals"),
   deleteAdminSignal: (signalId: number) =>

@@ -161,6 +161,10 @@ export const en: Messages = {
     userUpdated: "User updated",
     isAdmin: "Administrator",
     actionsCol: "Actions",
+    deleteUser: "Delete user",
+    deleteUserConfirm: "Delete {email}? Their trades, watchlist, and related data will be removed.",
+    passwordHint: "Leave blank to keep current",
+    userDeleted: "User deleted",
   },
   trade: {
     registerTitle: "Log trade",
