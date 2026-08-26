@@ -209,6 +209,24 @@ export const api = {
   equity: () => apiFetch<EquityPoint[]>("/api/dashboard/equity"),
   adminStats: () => apiFetch<AdminStats>("/api/admin/stats"),
   adminUsers: () => apiFetch<AdminUser[]>("/api/admin/users"),
+  updateAdminUser: (
+    userId: number,
+    payload: {
+      email?: string;
+      password?: string;
+      name?: string;
+      locale?: string;
+      is_admin?: boolean;
+    }
+  ) =>
+    apiFetch<AdminUser>(`/api/admin/users/${userId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
+  deleteAdminUser: (userId: number) =>
+    apiFetch<{ ok: boolean; deleted_id: number }>(`/api/admin/users/${userId}`, {
+      method: "DELETE",
+    }),
   adminSignals: () => apiFetch<Signal[]>("/api/admin/signals"),
   deleteAdminSignal: (signalId: number) =>
     apiFetch<{ ok: boolean; deleted_id: number }>(`/api/admin/signals/${signalId}`, {
