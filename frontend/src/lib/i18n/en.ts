@@ -90,6 +90,8 @@ export const en: Messages = {
     reason: "Reason",
     notes: "Notes",
     registerExit: "Log exit",
+    deleteTrade: "Delete",
+    deleteTradeConfirm: "Delete the {symbol} trade? This cannot be undone.",
     empty: "No trades match this filter yet.",
   },
   signals: {

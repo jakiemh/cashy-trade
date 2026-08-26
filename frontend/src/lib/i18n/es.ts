@@ -88,6 +88,8 @@ export const es = {
     reason: "Motivo",
     notes: "Notas",
     registerExit: "Registrar salida",
+    deleteTrade: "Eliminar",
+    deleteTradeConfirm: "¿Eliminar el trade de {symbol}? Esta acción no se puede deshacer.",
     empty: "Aún no registraste trades con ese filtro.",
   },
   signals: {

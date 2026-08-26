@@ -69,8 +69,31 @@ def delete_signal(
     if not signal:
         raise HTTPException(status_code=404, detail="Signal not found")
 
-    db.query(Trade).filter(Trade.signal_id == signal_id).update({Trade.signal_id: None})
-    db.query(Signal).filter(Signal.open_signal_id == signal_id).update({Signal.open_signal_id: None})
-    db.delete(signal)
+    deleted_trade_ids: set[int] = set()
+    deleted_signal_ids: set[int] = set()
+
+    def _delete_signal_tree(root_id: int) -> None:
+        if root_id in deleted_signal_ids:
+            return
+        child_signals = db.query(Signal).filter(Signal.open_signal_id == root_id).all()
+        for child in child_signals:
+            _delete_signal_tree(child.id)
+
+        trades = db.query(Trade).filter(Trade.signal_id == root_id).all()
+        for trade in trades:
+            deleted_trade_ids.add(trade.id)
+            db.delete(trade)
+
+        target = db.query(Signal).filter(Signal.id == root_id).first()
+        if target:
+            deleted_signal_ids.add(root_id)
+            db.delete(target)
+
+    _delete_signal_tree(signal_id)
     db.commit()
-    return {"ok": True, "deleted_id": signal_id}
+    return {
+        "ok": True,
+        "deleted_id": signal_id,
+        "deleted_signal_ids": sorted(deleted_signal_ids),
+        "deleted_trade_ids": sorted(deleted_trade_ids),
+    }
