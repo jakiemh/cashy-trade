@@ -18,8 +18,12 @@ En tu proyecto Vercel → **Settings → Environment Variables**:
 | `ADMIN_EMAILS` | tu@email.com |
 | `CORS_ORIGINS` | `https://TU-APP.vercel.app` |
 | `APP_BASE_URL` | `https://TU-APP.vercel.app` (enlaces de reset de contraseña) |
-| `RESEND_API_KEY` | (opcional) API key de [Resend](https://resend.com) |
-| `EMAIL_FROM` | Ver sección de email abajo |
+| `SMTP_HOST` | `smtp.gmail.com` (recomendado sin dominio propio) |
+| `SMTP_PORT` | `587` |
+| `SMTP_USER` | tu Gmail |
+| `SMTP_PASSWORD` | contraseña de aplicación de Gmail |
+| `EMAIL_FROM` | `Cashy Trade <tu@gmail.com>` |
+| `RESEND_API_KEY` | (opcional) solo con dominio propio verificado en Resend |
 | `VAPID_PUBLIC_KEY` | (opcional) clave pública push — ver abajo |
 | `VAPID_PRIVATE_KEY` | (opcional) clave privada push |
 | `VAPID_SUBJECT` | `mailto:tu@email.com` |
@@ -34,31 +38,42 @@ python scripts/generate_vapid_keys.py
 
 Copia las 3 variables a Vercel y redeploy. En la app, entra a **Señales → Alertas** para activar permisos + suscripción push.
 
-## Recuperar contraseña (Resend)
+## Recuperar contraseña por email
 
-**Importante:** `APP_BASE_URL` va en **Vercel**, no en Resend. Es la URL de tu app (ej. `https://cashy-trade.vercel.app`) que se usa en el enlace del correo.
+`APP_BASE_URL` va en **Vercel** (no en Resend). Es la URL de tu app en los enlaces del correo:
 
-En **Resend** solo configuras el dominio desde el que **envías** correos. **No puedes usar `*.vercel.app`** porque Vercel no permite editar DNS de ese subdominio.
+```
+APP_BASE_URL=https://cashy-trade.vercel.app
+```
 
-### Opción A — Pruebas (rápido)
+### Recomendado sin dominio propio — Gmail SMTP
 
-1. Crea cuenta en [resend.com](https://resend.com) y genera una API key.
-2. En Vercel:
-   - `RESEND_API_KEY` = tu API key
-   - `EMAIL_FROM` = `Cashy Trade <onboarding@resend.dev>`
-   - `APP_BASE_URL` = `https://cashy-trade.vercel.app`
-3. Con `onboarding@resend.dev` solo puedes enviar al email con el que te registraste en Resend.
+Permite enviar a **cualquier usuario** sin comprar dominio ni configurar DNS.
 
-### Opción B — Producción (dominio propio)
+1. Usa una cuenta Gmail (puede ser una dedicada al proyecto).
+2. Activa verificación en 2 pasos: [Google Account → Security](https://myaccount.google.com/security).
+3. Crea una **contraseña de aplicación**: Security → App passwords → Mail → Other ("Cashy Trade").
+4. En **Vercel → Environment Variables** agrega:
 
-1. Usa un dominio que **tú controles** (ej. `tudominio.com`), no `vercel.app`.
-2. En Resend → **Domains** → agrega un subdominio (ej. `mail.tudominio.com`).
-3. Agrega los registros DNS (TXT/MX) en tu proveedor de dominio o usa **Auto Configure** si el dominio está en Vercel.
-4. En Vercel:
-   - `EMAIL_FROM` = `Cashy Trade <noreply@mail.tudominio.com>`
-   - `APP_BASE_URL` = `https://cashy-trade.vercel.app` (sigue siendo tu app en Vercel)
+| Variable | Valor |
+|----------|--------|
+| `APP_BASE_URL` | `https://cashy-trade.vercel.app` |
+| `SMTP_HOST` | `smtp.gmail.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_USER` | `tu@gmail.com` |
+| `SMTP_PASSWORD` | contraseña de aplicación (16 caracteres, sin espacios) |
+| `EMAIL_FROM` | `Cashy Trade <tu@gmail.com>` |
 
-Alternativa SMTP (Gmail app password): `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASSWORD`.
+5. **No configures** `RESEND_API_KEY` si usas Gmail (SMTP tiene prioridad, pero evita confusiones).
+6. Redeploy en Vercel.
+
+Prueba en `/login` → **¿Olvidaste tu contraseña?**
+
+### Resend (solo si tienes dominio propio)
+
+Sin dominio, Resend en modo prueba (`onboarding@resend.dev`) **solo envía al email de tu cuenta Resend**, no a todos los usuarios.
+
+Si más adelante compras un dominio, verifica un subdominio en Resend (ej. `mail.tudominio.com`) y usa `RESEND_API_KEY` + `EMAIL_FROM` con ese dominio.
 
 **PWA instalable:** manifest + service worker + banner "Instalar" en la app. En iPhone: Safari → Compartir → Añadir a pantalla de inicio.
 

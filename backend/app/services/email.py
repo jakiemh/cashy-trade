@@ -10,8 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 def email_configured() -> bool:
-    if settings.resend_api_key:
+    if _smtp_configured():
         return True
+    return bool(settings.resend_api_key)
+
+
+def _smtp_configured() -> bool:
     return bool(settings.smtp_host and settings.smtp_user and settings.smtp_password)
 
 
@@ -28,10 +32,10 @@ def send_password_reset_email(to_email: str, reset_url: str) -> bool:
     <p>Si no lo pediste, ignora este correo.</p>
     """
 
+    if _smtp_configured():
+        return _send_via_smtp(to_email, subject, text, html)
     if settings.resend_api_key:
         return _send_via_resend(to_email, subject, text, html)
-    if settings.smtp_host and settings.smtp_user and settings.smtp_password:
-        return _send_via_smtp(to_email, subject, text, html)
 
     logger.warning("Email not configured; password reset link for %s: %s", to_email, reset_url)
     return False
