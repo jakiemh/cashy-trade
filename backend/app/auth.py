@@ -49,6 +49,12 @@ def create_user(db: Session, email: str, password: str, name: str = "") -> User:
     return user
 
 
+def update_user_password(db: Session, user: User, password: str) -> None:
+    user.password_hash = hash_password(password)
+    db.commit()
+    db.refresh(user)
+
+
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
     user = db.query(User).filter(User.email == email.lower()).first()
     if not user or not verify_password(password, user.password_hash):

@@ -163,6 +163,16 @@ export const api = {
       body: JSON.stringify({ email, password }),
     }),
   me: () => apiFetch<User>("/api/auth/me"),
+  forgotPassword: (email: string) =>
+    apiFetch<{ ok: boolean; message: string }>("/api/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, password: string) =>
+    apiFetch<{ ok: boolean; message: string }>("/api/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ token, password }),
+    }),
   signals: (params?: SignalFilters) => {
     const query = new URLSearchParams();
     if (params?.active_only) query.set("active_only", "true");
