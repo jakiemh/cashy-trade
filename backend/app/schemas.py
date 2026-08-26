@@ -8,6 +8,20 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class ForgotPasswordIn(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordIn(BaseModel):
+    token: str = Field(min_length=20)
+    password: str = Field(min_length=8)
+
+
+class OkMessage(BaseModel):
+    ok: bool = True
+    message: str
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(min_length=8)

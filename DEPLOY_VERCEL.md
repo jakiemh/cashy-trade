@@ -17,6 +17,9 @@ En tu proyecto Vercel → **Settings → Environment Variables**:
 | `BOT_API_KEY` | Misma clave que en tu bot Python |
 | `ADMIN_EMAILS` | tu@email.com |
 | `CORS_ORIGINS` | `https://TU-APP.vercel.app` |
+| `APP_BASE_URL` | `https://TU-APP.vercel.app` (enlaces de reset de contraseña) |
+| `RESEND_API_KEY` | (opcional) API key de [Resend](https://resend.com) |
+| `EMAIL_FROM` | Ver sección de email abajo |
 | `VAPID_PUBLIC_KEY` | (opcional) clave pública push — ver abajo |
 | `VAPID_PRIVATE_KEY` | (opcional) clave privada push |
 | `VAPID_SUBJECT` | `mailto:tu@email.com` |
@@ -30,6 +33,32 @@ python scripts/generate_vapid_keys.py
 ```
 
 Copia las 3 variables a Vercel y redeploy. En la app, entra a **Señales → Alertas** para activar permisos + suscripción push.
+
+## Recuperar contraseña (Resend)
+
+**Importante:** `APP_BASE_URL` va en **Vercel**, no en Resend. Es la URL de tu app (ej. `https://cashy-trade.vercel.app`) que se usa en el enlace del correo.
+
+En **Resend** solo configuras el dominio desde el que **envías** correos. **No puedes usar `*.vercel.app`** porque Vercel no permite editar DNS de ese subdominio.
+
+### Opción A — Pruebas (rápido)
+
+1. Crea cuenta en [resend.com](https://resend.com) y genera una API key.
+2. En Vercel:
+   - `RESEND_API_KEY` = tu API key
+   - `EMAIL_FROM` = `Cashy Trade <onboarding@resend.dev>`
+   - `APP_BASE_URL` = `https://cashy-trade.vercel.app`
+3. Con `onboarding@resend.dev` solo puedes enviar al email con el que te registraste en Resend.
+
+### Opción B — Producción (dominio propio)
+
+1. Usa un dominio que **tú controles** (ej. `tudominio.com`), no `vercel.app`.
+2. En Resend → **Domains** → agrega un subdominio (ej. `mail.tudominio.com`).
+3. Agrega los registros DNS (TXT/MX) en tu proveedor de dominio o usa **Auto Configure** si el dominio está en Vercel.
+4. En Vercel:
+   - `EMAIL_FROM` = `Cashy Trade <noreply@mail.tudominio.com>`
+   - `APP_BASE_URL` = `https://cashy-trade.vercel.app` (sigue siendo tu app en Vercel)
+
+Alternativa SMTP (Gmail app password): `SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USER`, `SMTP_PASSWORD`.
 
 **PWA instalable:** manifest + service worker + banner "Instalar" en la app. En iPhone: Safari → Compartir → Añadir a pantalla de inicio.
 
