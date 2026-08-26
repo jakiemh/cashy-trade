@@ -17,16 +17,25 @@ export default function AdminPage() {
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [testEmail, setTestEmail] = useState("");
+  const [emailStatus, setEmailStatus] = useState<string>("");
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
 
   const load = useCallback(async () => {
-    const [statsData, usersData, signalsData] = await Promise.all([
+    const [statsData, usersData, signalsData, emailStatusData] = await Promise.all([
       api.adminStats(),
       api.adminUsers(),
       api.adminSignals(),
+      api.adminEmailStatus(),
     ]);
     setStats(statsData);
     setUsers(usersData);
     setSignals(signalsData);
+    setEmailStatus(
+      emailStatusData.configured
+        ? `${emailStatusData.provider} · ${emailStatusData.email_from}`
+        : "not_configured"
+    );
     setError("");
   }, []);
 
@@ -70,12 +79,50 @@ export default function AdminPage() {
     }
   }
 
+  async function sendTestEmail() {
+    if (!testEmail.trim()) return;
+    setSendingTestEmail(true);
+    setError("");
+    try {
+      await api.adminTestEmail(testEmail.trim());
+      window.alert(t("admin.testEmailSent"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("common.error"));
+    } finally {
+      setSendingTestEmail(false);
+    }
+  }
+
   return (
     <AppShell>
       <PageHeader title={t("admin.title")} subtitle={t("admin.subtitle")} />
       {error ? <p className="text-rose-600">{error}</p> : null}
       {stats ? (
         <>
+          <div className="glass-card mb-6 flex flex-wrap items-end gap-3">
+            <div className="min-w-[220px] flex-1">
+              <p className="text-sm font-medium text-slate-700">{t("admin.testEmail")}</p>
+              <p className="text-xs text-muted">
+                {emailStatus === "not_configured" ? t("admin.emailNotConfigured") : emailStatus}
+              </p>
+            </div>
+            <input
+              className="input min-w-[220px] flex-1"
+              type="email"
+              placeholder="tu@email.com"
+              value={testEmail}
+              onChange={(event) => setTestEmail(event.target.value)}
+            />
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={sendingTestEmail || !testEmail.trim()}
+              onClick={sendTestEmail}
+            >
+              {sendingTestEmail ? "..." : t("admin.sendTestEmail")}
+            </button>
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             <StatCard label={t("admin.users")} value={`${stats.total_users}`} />
             <StatCard label={t("admin.signals")} value={`${stats.total_signals}`} />

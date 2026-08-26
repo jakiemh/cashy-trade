@@ -241,6 +241,22 @@ export const api = {
     apiFetch<{ ok: boolean; deleted_id: number }>(`/api/admin/users/${userId}`, {
       method: "DELETE",
     }),
+  adminEmailStatus: () =>
+    apiFetch<{
+      configured: boolean;
+      provider: string;
+      smtp_host: string | null;
+      smtp_port: number;
+      smtp_user: string | null;
+      email_from: string;
+      app_base_url: string;
+      placeholders_detected: boolean;
+    }>("/api/admin/email-status"),
+  adminTestEmail: (email: string) =>
+    apiFetch<{ ok: boolean; sent_to: string; detail: string }>("/api/admin/test-email", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    }),
   adminSignals: () => apiFetch<Signal[]>("/api/admin/signals"),
   deleteAdminSignal: (signalId: number) =>
     apiFetch<{

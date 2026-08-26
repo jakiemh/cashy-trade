@@ -179,6 +179,12 @@ export const es = {
     deleteUserConfirm: "¿Eliminar a {email}? Se borrarán sus trades, watchlist y datos asociados.",
     passwordHint: "Dejar vacío para no cambiar",
     userDeleted: "Usuario eliminado",
+    testEmail: "Probar correo",
+    sendTestEmail: "Enviar prueba",
+    emailConfigured: "Correo configurado",
+    emailNotConfigured: "Correo no configurado",
+    placeholdersWarning: "Hay variables EDIT_ME sin cambiar en Vercel",
+    testEmailSent: "Correo de prueba enviado",
   },
   trade: {
     registerTitle: "Registrar trade",

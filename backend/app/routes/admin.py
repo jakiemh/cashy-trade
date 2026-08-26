@@ -6,8 +6,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_admin_user
 from app.models import ChatMessage, PushSubscription, Signal, Trade, User, UserSettings, WatchlistItem
-from app.schemas import AdminStatsOut, AdminUserOut, AdminUserUpdate, SignalOut
+from app.schemas import AdminStatsOut, AdminTestEmailIn, AdminUserOut, AdminUserUpdate, SignalOut
 from app.auth import hash_password
+from app.services.email import email_config_status, send_test_email
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -84,6 +85,22 @@ def update_user(
     db.commit()
     db.refresh(target)
     return _admin_user_out(db, target)
+
+
+@router.get("/email-status")
+def admin_email_status(user: User = Depends(get_admin_user)):
+    return email_config_status()
+
+
+@router.post("/test-email")
+def admin_test_email(
+    payload: AdminTestEmailIn,
+    user: User = Depends(get_admin_user),
+):
+    sent, detail = send_test_email(payload.email)
+    if not sent:
+        raise HTTPException(status_code=502, detail=detail)
+    return {"ok": True, "sent_to": payload.email, "detail": detail}
 
 
 @router.delete("/users/{user_id}")

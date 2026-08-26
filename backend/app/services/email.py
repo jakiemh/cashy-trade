@@ -1,12 +1,17 @@
 import logging
 import smtplib
 from email.message import EmailMessage
+from typing import Any
 
 import httpx
 
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _smtp_password() -> str:
+    return settings.smtp_password.replace(" ", "")
 
 
 def email_configured() -> bool:
@@ -16,10 +21,44 @@ def email_configured() -> bool:
 
 
 def _smtp_configured() -> bool:
-    return bool(settings.smtp_host and settings.smtp_user and settings.smtp_password)
+    password = _smtp_password()
+    user = (settings.smtp_user or "").strip()
+    if not user or not password:
+        return False
+    if "EDIT_ME" in user or "EDIT_ME" in password:
+        return False
+    return bool(settings.smtp_host)
 
 
-def send_password_reset_email(to_email: str, reset_url: str) -> bool:
+def email_config_status() -> dict[str, Any]:
+    provider = "none"
+    if _smtp_configured():
+        provider = "smtp"
+    elif settings.resend_api_key:
+        provider = "resend"
+
+    return {
+        "configured": email_configured(),
+        "provider": provider,
+        "smtp_host": settings.smtp_host or None,
+        "smtp_port": settings.smtp_port,
+        "smtp_user": settings.smtp_user or None,
+        "email_from": settings.email_from,
+        "app_base_url": settings.app_base_url,
+        "placeholders_detected": "EDIT_ME" in (
+            f"{settings.smtp_user}{settings.smtp_password}{settings.email_from}"
+        ),
+    }
+
+
+def send_test_email(to_email: str) -> tuple[bool, str]:
+    subject = "Prueba de correo — Cashy Trade"
+    text = "Si ves este mensaje, el envío de correos desde Cashy Trade funciona correctamente."
+    html = "<p>Si ves este mensaje, el envío de correos desde <strong>Cashy Trade</strong> funciona correctamente.</p>"
+    return _send_email(to_email, subject, text, html)
+
+
+def send_password_reset_email(to_email: str, reset_url: str) -> tuple[bool, str]:
     subject = "Restablecer contraseña — Cashy Trade"
     text = (
         "Recibimos una solicitud para restablecer tu contraseña en Cashy Trade.\n\n"
@@ -31,17 +70,21 @@ def send_password_reset_email(to_email: str, reset_url: str) -> bool:
     <p><a href="{reset_url}">Restablecer contraseña</a></p>
     <p>Si no lo pediste, ignora este correo.</p>
     """
+    return _send_email(to_email, subject, text, html)
 
+
+def _send_email(to_email: str, subject: str, text: str, html: str) -> tuple[bool, str]:
     if _smtp_configured():
         return _send_via_smtp(to_email, subject, text, html)
     if settings.resend_api_key:
         return _send_via_resend(to_email, subject, text, html)
 
-    logger.warning("Email not configured; password reset link for %s: %s", to_email, reset_url)
-    return False
+    message = "Email not configured on server"
+    logger.warning("%s; recipient=%s", message, to_email)
+    return False, message
 
 
-def _send_via_resend(to_email: str, subject: str, text: str, html: str) -> bool:
+def _send_via_resend(to_email: str, subject: str, text: str, html: str) -> tuple[bool, str]:
     payload = {
         "from": settings.email_from,
         "to": [to_email],
@@ -57,14 +100,16 @@ def _send_via_resend(to_email: str, subject: str, text: str, html: str) -> bool:
                 json=payload,
             )
         if response.is_success:
-            return True
-        logger.warning("Resend failed (%s): %s", response.status_code, response.text[:300])
+            return True, "sent_via_resend"
+        detail = response.text[:300]
+        logger.warning("Resend failed (%s): %s", response.status_code, detail)
+        return False, f"Resend error {response.status_code}: {detail}"
     except Exception as exc:
         logger.warning("Resend error: %s", exc)
-    return False
+        return False, f"Resend error: {exc}"
 
 
-def _send_via_smtp(to_email: str, subject: str, text: str, html: str) -> bool:
+def _send_via_smtp(to_email: str, subject: str, text: str, html: str) -> tuple[bool, str]:
     message = EmailMessage()
     message["Subject"] = subject
     message["From"] = settings.email_from
@@ -72,12 +117,23 @@ def _send_via_smtp(to_email: str, subject: str, text: str, html: str) -> bool:
     message.set_content(text)
     message.add_alternative(html, subtype="html")
 
+    password = _smtp_password()
+    user = settings.smtp_user.strip()
+    port = settings.smtp_port
+
     try:
-        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as smtp:
-            smtp.starttls()
-            smtp.login(settings.smtp_user, settings.smtp_password)
-            smtp.send_message(message)
-        return True
+        if port == 465:
+            with smtplib.SMTP_SSL(settings.smtp_host, port, timeout=20) as smtp:
+                smtp.login(user, password)
+                smtp.send_message(message)
+        else:
+            with smtplib.SMTP(settings.smtp_host, port, timeout=20) as smtp:
+                smtp.ehlo()
+                smtp.starttls()
+                smtp.ehlo()
+                smtp.login(user, password)
+                smtp.send_message(message)
+        return True, "sent_via_smtp"
     except Exception as exc:
         logger.warning("SMTP error: %s", exc)
-        return False
+        return False, f"SMTP error: {exc}"
