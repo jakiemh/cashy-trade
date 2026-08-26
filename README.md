@@ -101,9 +101,13 @@ Resumen:
 Agrega tu email en `ADMIN_EMAILS`. En `/admin` puedes:
 
 - Ver stats globales y usuarios
+<<<<<<< HEAD
+- **Eliminar señales** (ej. TEST de prueba) — también borra los trades asociados en la bitácora
+=======
 - **Editar usuarios** (email, nombre, contraseña, idioma, permisos admin)
 - **Eliminar usuarios** y sus datos asociados
 - **Eliminar señales** (ej. TEST de prueba)
+>>>>>>> origin/main
 
 ## PostgreSQL local (opcional)
 

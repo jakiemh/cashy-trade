@@ -185,6 +185,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  deleteTrade: (tradeId: number) =>
+    apiFetch<{ ok: boolean; deleted_id: number }>(`/api/trades/${tradeId}`, {
+      method: "DELETE",
+    }),
   exportTrades: async () => {
     const token = getToken();
     const response = await fetch(`${API_URL}/api/trades/export`, {
@@ -229,7 +233,12 @@ export const api = {
     }),
   adminSignals: () => apiFetch<Signal[]>("/api/admin/signals"),
   deleteAdminSignal: (signalId: number) =>
-    apiFetch<{ ok: boolean; deleted_id: number }>(`/api/admin/signals/${signalId}`, {
+    apiFetch<{
+      ok: boolean;
+      deleted_id: number;
+      deleted_signal_ids: number[];
+      deleted_trade_ids: number[];
+    }>(`/api/admin/signals/${signalId}`, {
       method: "DELETE",
     }),
   pushVapidKey: () => apiFetch<{ public_key: string | null; enabled: boolean }>("/api/push/vapid-public-key"),

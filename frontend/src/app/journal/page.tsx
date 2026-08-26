@@ -16,6 +16,7 @@ export default function JournalPage() {
   const [exporting, setExporting] = useState(false);
   const [exitTrade, setExitTrade] = useState<Trade | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "open" | "closed">("all");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   async function load() {
     const data = await api.trades();
@@ -39,6 +40,21 @@ export default function JournalPage() {
       setError(err instanceof Error ? err.message : t("common.error"));
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function deleteTrade(trade: Trade) {
+    const ok = window.confirm(t("journal.deleteTradeConfirm", { symbol: trade.symbol }));
+    if (!ok) return;
+    setDeletingId(trade.id);
+    setError("");
+    try {
+      await api.deleteTrade(trade.id);
+      setTrades((current) => current.filter((item) => item.id !== trade.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("common.error"));
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -127,10 +143,29 @@ export default function JournalPage() {
               ) : null}
             </div>
             {trade.status === "open" ? (
-              <button type="button" className="btn-primary mt-4" onClick={() => setExitTrade(trade)}>
-                {t("journal.registerExit")}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" className="btn-primary" onClick={() => setExitTrade(trade)}>
+                  {t("journal.registerExit")}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={deletingId === trade.id}
+                  onClick={() => deleteTrade(trade)}
+                >
+                  {deletingId === trade.id ? "..." : t("journal.deleteTrade")}
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="btn-secondary mt-4"
+                disabled={deletingId === trade.id}
+                onClick={() => deleteTrade(trade)}
+              >
+                {deletingId === trade.id ? "..." : t("journal.deleteTrade")}
               </button>
-            ) : null}
+            )}
           </div>
         ))}
         {!filtered.length ? <p className="text-muted">{t("journal.empty")}</p> : null}

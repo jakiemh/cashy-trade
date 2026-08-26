@@ -130,3 +130,17 @@ def close_trade(
     db.commit()
     db.refresh(trade)
     return trade
+
+
+@router.delete("/{trade_id}")
+def delete_trade(
+    trade_id: int,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    trade = db.query(Trade).filter(Trade.id == trade_id, Trade.user_id == user.id).first()
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    db.delete(trade)
+    db.commit()
+    return {"ok": True, "deleted_id": trade_id}
