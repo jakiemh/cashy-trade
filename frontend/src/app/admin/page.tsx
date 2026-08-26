@@ -87,7 +87,12 @@ export default function AdminPage() {
       await api.adminTestEmail(testEmail.trim());
       window.alert(t("admin.testEmailSent"));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("common.error"));
+      const raw = err instanceof Error ? err.message : t("common.error");
+      const message =
+        raw.includes("BadCredentials") || raw.includes("535")
+          ? t("admin.smtpBadCredentials")
+          : raw;
+      setError(message);
     } finally {
       setSendingTestEmail(false);
     }

@@ -185,6 +185,8 @@ export const es = {
     emailNotConfigured: "Correo no configurado",
     placeholdersWarning: "Hay variables EDIT_ME sin cambiar en Vercel",
     testEmailSent: "Correo de prueba enviado",
+    smtpBadCredentials:
+      "Gmail rechazó usuario o contraseña. Usa una contraseña de aplicación (16 caracteres), no tu contraseña normal.",
   },
   trade: {
     registerTitle: "Registrar trade",
