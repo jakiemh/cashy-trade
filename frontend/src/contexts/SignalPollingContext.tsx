@@ -45,12 +45,12 @@ export function SignalPollingProvider({ children }: { children: React.ReactNode 
   const clearPending = useCallback(() => setPendingCount(0), []);
 
   const dispatchFresh = useCallback(
-    (fresh: Signal[], fromPush = false) => {
+    (fresh: Signal[]) => {
       if (!fresh.length) return;
       fresh.forEach((signal) => knownIdsRef.current.add(signal.id));
       sinceRef.current = fresh[0].timestamp;
       setPendingCount((count) => count + fresh.length);
-      if (notifyEnabled && !fromPush) notifyNewSignals(fresh);
+      if (notifyEnabled) notifyNewSignals(fresh);
       listenersRef.current.forEach((listener) => listener(fresh));
     },
     [notifyEnabled]
@@ -68,7 +68,7 @@ export function SignalPollingProvider({ children }: { children: React.ReactNode 
   }, []);
 
   const pollOnce = useCallback(async () => {
-    if (!getToken() || wsConnected) return;
+    if (!getToken()) return;
     try {
       const params = sinceRef.current ? { since: sinceRef.current } : undefined;
       const incoming = await api.signals(params);
@@ -77,7 +77,7 @@ export function SignalPollingProvider({ children }: { children: React.ReactNode 
     } catch {
       // ignore polling errors
     }
-  }, [dispatchFresh, wsConnected]);
+  }, [dispatchFresh]);
 
   const enableNotifications = useCallback(async () => {
     const granted = await requestNotificationPermission();
@@ -127,7 +127,7 @@ export function SignalPollingProvider({ children }: { children: React.ReactNode 
           try {
             const payload = JSON.parse(String(event.data)) as Signal;
             if (!payload?.id || knownIdsRef.current.has(payload.id)) return;
-            dispatchFresh([payload], true);
+            dispatchFresh([payload]);
           } catch {
             // ignore malformed messages
           }

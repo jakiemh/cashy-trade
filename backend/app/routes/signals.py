@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Query
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -28,12 +28,13 @@ def _serialize_signals(db: Session, user_id: int, signals: list[Signal]) -> list
 
 
 @router.post("", response_model=SignalOut, dependencies=[Depends(verify_bot_api_key)])
-def ingest_signal(payload: SignalIn, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def ingest_signal(payload: SignalIn, db: Session = Depends(get_db)):
     signal = create_signal(db, payload)
     out = SignalOut.model_validate({**SignalOut.model_validate(signal).model_dump(), "taken_by_user": False})
     payload_dict = out.model_dump(mode="json")
     signal_hub.broadcast_sync(payload_dict)
-    background_tasks.add_task(_push_new_signal, payload_dict)
+    # Must run synchronously on Vercel — BackgroundTasks may be dropped after response.
+    _push_new_signal(payload_dict)
     return out
 
 
