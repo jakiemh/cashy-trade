@@ -1,4 +1,6 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.auth import authenticate_user, create_access_token, create_user, update_user_password
@@ -23,6 +25,8 @@ from app.services.password_reset import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+logger = logging.getLogger(__name__)
 
 RESET_SENT_MESSAGE = "Si el correo existe, recibirás un enlace para restablecer la contraseña."
 
@@ -50,16 +54,14 @@ def me(user: User = Depends(get_current_user)):
 
 
 @router.post("/forgot-password", response_model=OkMessage)
-def forgot_password(
-    payload: ForgotPasswordIn,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-):
+def forgot_password(payload: ForgotPasswordIn, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == payload.email.lower()).first()
     if user:
         raw_token = create_password_reset_token(db, user)
         reset_url = f"{settings.app_base_url.rstrip('/')}/reset-password?token={raw_token}"
-        background_tasks.add_task(send_password_reset_email, user.email, reset_url)
+        sent, detail = send_password_reset_email(user.email, reset_url)
+        if not sent:
+            logger.warning("Password reset email failed for %s: %s", user.email, detail)
     return OkMessage(message=RESET_SENT_MESSAGE)
 
 

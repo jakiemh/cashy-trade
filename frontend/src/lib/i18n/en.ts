@@ -181,6 +181,12 @@ export const en: Messages = {
     deleteUserConfirm: "Delete {email}? Their trades, watchlist, and related data will be removed.",
     passwordHint: "Leave blank to keep current",
     userDeleted: "User deleted",
+    testEmail: "Test email",
+    sendTestEmail: "Send test",
+    emailConfigured: "Email configured",
+    emailNotConfigured: "Email not configured",
+    placeholdersWarning: "EDIT_ME placeholders still set in Vercel",
+    testEmailSent: "Test email sent",
   },
   trade: {
     registerTitle: "Log trade",
