@@ -101,6 +101,7 @@ Resumen:
 Agrega tu email en `ADMIN_EMAILS`. En `/admin` puedes:
 
 - Ver stats globales y usuarios
+- **Editar usuarios** (nombre, idioma, permisos admin)
 - **Eliminar señales** (ej. TEST de prueba)
 
 ## PostgreSQL local (opcional)

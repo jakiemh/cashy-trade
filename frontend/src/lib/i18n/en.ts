@@ -155,6 +155,12 @@ export const en: Messages = {
     typeCol: "Type",
     symbolCol: "Ticker",
     timeCol: "Time",
+    editUser: "Edit",
+    editUserTitle: "Edit user",
+    saveUser: "Save",
+    userUpdated: "User updated",
+    isAdmin: "Administrator",
+    actionsCol: "Actions",
   },
   trade: {
     registerTitle: "Log trade",

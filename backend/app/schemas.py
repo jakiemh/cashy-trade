@@ -165,6 +165,12 @@ class AdminUserOut(BaseModel):
     trade_count: int
 
 
+class AdminUserUpdate(BaseModel):
+    name: str | None = None
+    locale: str | None = None
+    is_admin: bool | None = None
+
+
 class TradeMatchOut(BaseModel):
     trade: TradeOut | None
     cierre_signal_id: int

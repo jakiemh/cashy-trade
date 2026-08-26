@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
+import AdminUserEditModal from "@/components/AdminUserEditModal";
 import { Badge, PageHeader, StatCard } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
 import { api, AdminStats, AdminUser, getToken, Signal } from "@/lib/api";
@@ -15,6 +16,7 @@ export default function AdminPage() {
   const [signals, setSignals] = useState<Signal[]>([]);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
 
   const load = useCallback(async () => {
     const [statsData, usersData, signalsData] = await Promise.all([
@@ -55,6 +57,10 @@ export default function AdminPage() {
     } finally {
       setDeletingId(null);
     }
+  }
+
+  function handleUserUpdated(updated: AdminUser) {
+    setUsers((current) => current.map((item) => (item.id === updated.id ? updated : item)));
   }
 
   return (
@@ -122,7 +128,8 @@ export default function AdminPage() {
                   <th className="py-2 pr-4">{t("settings.language")}</th>
                   <th className="py-2 pr-4">{t("admin.tradesCol")}</th>
                   <th className="py-2 pr-4">{t("admin.adminCol")}</th>
-                  <th className="py-2">Created</th>
+                  <th className="py-2 pr-4">Created</th>
+                  <th className="py-2">{t("admin.actionsCol")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -133,7 +140,16 @@ export default function AdminPage() {
                     <td className="py-3 pr-4">{user.locale}</td>
                     <td className="py-3 pr-4">{user.trade_count}</td>
                     <td className="py-3 pr-4">{user.is_admin ? "✓" : "-"}</td>
-                    <td className="py-3">{new Date(user.created_at).toLocaleString()}</td>
+                    <td className="py-3 pr-4">{new Date(user.created_at).toLocaleString()}</td>
+                    <td className="py-3">
+                      <button
+                        type="button"
+                        className="btn-secondary px-3 py-1.5 text-xs"
+                        onClick={() => setEditingUser(user)}
+                      >
+                        {t("admin.editUser")}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -143,6 +159,12 @@ export default function AdminPage() {
       ) : !error ? (
         <p className="text-muted">{t("common.loading")}</p>
       ) : null}
+      <AdminUserEditModal
+        user={editingUser}
+        open={Boolean(editingUser)}
+        onClose={() => setEditingUser(null)}
+        onSuccess={handleUserUpdated}
+      />
     </AppShell>
   );
 }

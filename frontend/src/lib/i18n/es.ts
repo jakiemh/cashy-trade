@@ -153,6 +153,12 @@ export const es = {
     typeCol: "Tipo",
     symbolCol: "Ticker",
     timeCol: "Hora",
+    editUser: "Editar",
+    editUserTitle: "Editar usuario",
+    saveUser: "Guardar",
+    userUpdated: "Usuario actualizado",
+    isAdmin: "Administrador",
+    actionsCol: "Acciones",
   },
   trade: {
     registerTitle: "Registrar trade",
