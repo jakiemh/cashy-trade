@@ -125,6 +125,17 @@ class TradeClose(BaseModel):
     notes: str | None = None
 
 
+class TradeUpdate(BaseModel):
+    entry_price: float | None = None
+    entry_qty: float | None = None
+    stop_loss: float | None = None
+    take_profit: float | None = None
+    exit_price: float | None = None
+    exit_at: datetime | None = None
+    exit_reason: str | None = None
+    notes: str | None = None
+
+
 class TradeOut(BaseModel):
     id: int
     signal_id: int | None

@@ -199,6 +199,11 @@ export const api = {
     apiFetch<{ ok: boolean; deleted_id: number }>(`/api/trades/${tradeId}`, {
       method: "DELETE",
     }),
+  updateTrade: (tradeId: number, payload: Record<string, unknown>) =>
+    apiFetch<Trade>(`/api/trades/${tradeId}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }),
   exportTrades: async () => {
     const token = getToken();
     const response = await fetch(`${API_URL}/api/trades/export`, {

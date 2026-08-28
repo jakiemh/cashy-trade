@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import Signal, Trade, User
-from app.schemas import TradeClose, TradeCreate, TradeMatchOut, TradeOut
+from app.schemas import TradeClose, TradeCreate, TradeMatchOut, TradeOut, TradeUpdate
 from app.services.export import trades_to_csv
 from app.services.signals import compute_trade_pnl
 
@@ -127,6 +127,45 @@ def close_trade(
     trade.pnl_usd = pnl_usd
     trade.pnl_pct = pnl_pct
     trade.status = "closed"
+    db.commit()
+    db.refresh(trade)
+    return trade
+
+
+@router.patch("/{trade_id}", response_model=TradeOut)
+def update_trade(
+    trade_id: int,
+    payload: TradeUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    trade = db.query(Trade).filter(Trade.id == trade_id, Trade.user_id == user.id).first()
+    if not trade:
+        raise HTTPException(status_code=404, detail="Trade not found")
+
+    if payload.entry_price is not None:
+        trade.entry_price = payload.entry_price
+    if payload.entry_qty is not None:
+        trade.entry_qty = payload.entry_qty
+    if payload.stop_loss is not None:
+        trade.stop_loss = payload.stop_loss
+    if payload.take_profit is not None:
+        trade.take_profit = payload.take_profit
+    if payload.notes is not None:
+        trade.notes = payload.notes
+
+    if trade.status == "closed":
+        if payload.exit_price is not None:
+            trade.exit_price = payload.exit_price
+        if payload.exit_at is not None:
+            trade.exit_at = payload.exit_at
+        if payload.exit_reason is not None:
+            trade.exit_reason = payload.exit_reason
+        if trade.exit_price is not None:
+            pnl_usd, pnl_pct = compute_trade_pnl(trade.entry_price, trade.entry_qty, trade.exit_price)
+            trade.pnl_usd = pnl_usd
+            trade.pnl_pct = pnl_pct
+
     db.commit()
     db.refresh(trade)
     return trade
