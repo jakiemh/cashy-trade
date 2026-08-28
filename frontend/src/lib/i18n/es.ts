@@ -104,6 +104,9 @@ export const es = {
     registerExit: "Registrar salida",
     deleteTrade: "Eliminar",
     deleteTradeConfirm: "¿Eliminar el trade de {symbol}? Esta acción no se puede deshacer.",
+    editTrade: "Editar",
+    editClosedHint: "Corrige salida, P&L y notas del trade cerrado.",
+    editOpenHint: "Actualiza entrada, stop y notas del trade abierto.",
     empty: "Aún no registraste trades con ese filtro.",
   },
   signals: {

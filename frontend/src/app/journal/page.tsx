@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import TradeExitModal from "@/components/TradeExitModal";
+import TradeEditModal from "@/components/TradeEditModal";
 import { Badge, formatMoney, formatPct, PageHeader } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
 import { api, getToken, Trade } from "@/lib/api";
@@ -15,6 +16,7 @@ export default function JournalPage() {
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
   const [exitTrade, setExitTrade] = useState<Trade | null>(null);
+  const [editTrade, setEditTrade] = useState<Trade | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "open" | "closed">("all");
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
@@ -147,6 +149,9 @@ export default function JournalPage() {
                 <button type="button" className="btn-primary" onClick={() => setExitTrade(trade)}>
                   {t("journal.registerExit")}
                 </button>
+                <button type="button" className="btn-secondary" onClick={() => setEditTrade(trade)}>
+                  {t("journal.editTrade")}
+                </button>
                 <button
                   type="button"
                   className="btn-secondary"
@@ -157,14 +162,19 @@ export default function JournalPage() {
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                className="btn-secondary mt-4"
-                disabled={deletingId === trade.id}
-                onClick={() => deleteTrade(trade)}
-              >
-                {deletingId === trade.id ? "..." : t("journal.deleteTrade")}
-              </button>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" className="btn-secondary" onClick={() => setEditTrade(trade)}>
+                  {t("journal.editTrade")}
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  disabled={deletingId === trade.id}
+                  onClick={() => deleteTrade(trade)}
+                >
+                  {deletingId === trade.id ? "..." : t("journal.deleteTrade")}
+                </button>
+              </div>
             )}
           </div>
         ))}
@@ -175,6 +185,12 @@ export default function JournalPage() {
         trade={exitTrade}
         open={Boolean(exitTrade)}
         onClose={() => setExitTrade(null)}
+        onSuccess={load}
+      />
+      <TradeEditModal
+        trade={editTrade}
+        open={Boolean(editTrade)}
+        onClose={() => setEditTrade(null)}
         onSuccess={load}
       />
     </AppShell>

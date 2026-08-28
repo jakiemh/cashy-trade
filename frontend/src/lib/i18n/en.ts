@@ -106,6 +106,9 @@ export const en: Messages = {
     registerExit: "Log exit",
     deleteTrade: "Delete",
     deleteTradeConfirm: "Delete the {symbol} trade? This cannot be undone.",
+    editTrade: "Edit",
+    editClosedHint: "Fix exit, P&L, and notes for this closed trade.",
+    editOpenHint: "Update entry, stop, and notes for this open trade.",
     empty: "No trades match this filter yet.",
   },
   signals: {
