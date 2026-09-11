@@ -37,13 +37,21 @@ def email_config_status() -> dict[str, Any]:
     elif settings.resend_api_key:
         provider = "resend"
 
+    password = _smtp_password()
+    user = (settings.smtp_user or "").strip().lower()
+    from_email = settings.email_from or ""
+    from_match = user and user in from_email.lower()
+
     return {
         "configured": email_configured(),
         "provider": provider,
         "smtp_host": settings.smtp_host or None,
         "smtp_port": settings.smtp_port,
         "smtp_user": settings.smtp_user or None,
+        "smtp_password_length": len(password),
+        "smtp_password_valid_length": len(password) == 16,
         "email_from": settings.email_from,
+        "email_from_matches_smtp_user": from_match,
         "app_base_url": settings.app_base_url,
         "placeholders_detected": "EDIT_ME" in (
             f"{settings.smtp_user}{settings.smtp_password}{settings.email_from}"

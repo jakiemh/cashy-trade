@@ -276,7 +276,10 @@ export const api = {
       smtp_host: string | null;
       smtp_port: number;
       smtp_user: string | null;
+      smtp_password_length: number;
+      smtp_password_valid_length: boolean;
       email_from: string;
+      email_from_matches_smtp_user: boolean;
       app_base_url: string;
       placeholders_detected: boolean;
     }>("/api/admin/email-status"),
