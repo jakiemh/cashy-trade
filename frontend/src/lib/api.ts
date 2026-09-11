@@ -67,6 +67,16 @@ export type EquityPoint = {
   cumulative_pnl_usd: number;
 };
 
+export type MonthlyDashboardPoint = {
+  month: string;
+  signals_received: number;
+  trades_taken: number;
+  conversion_pct: number;
+  pnl_usd: number;
+  win_rate: number;
+  closed_trades: number;
+};
+
 export type AdminStats = {
   total_users: number;
   total_signals: number;
@@ -226,6 +236,7 @@ export const api = {
     ),
   stats: () => apiFetch<DashboardStats>("/api/dashboard/stats"),
   equity: () => apiFetch<EquityPoint[]>("/api/dashboard/equity"),
+  monthlyStats: () => apiFetch<MonthlyDashboardPoint[]>("/api/dashboard/monthly"),
   adminStats: () => apiFetch<AdminStats>("/api/admin/stats"),
   adminUsers: () => apiFetch<AdminUser[]>("/api/admin/users"),
   updateAdminUser: (
