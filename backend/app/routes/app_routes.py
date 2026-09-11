@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -24,18 +24,30 @@ router = APIRouter(tags=["app"])
 
 
 @router.get("/dashboard/stats", response_model=DashboardStats)
-def stats(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return dashboard_stats(db, user.id)
+def stats(
+    account_type: str | None = Query(default=None, pattern="^(all|real|paper)$"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return dashboard_stats(db, user.id, account_type)
 
 
 @router.get("/dashboard/equity", response_model=list[EquityPoint])
-def equity(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return equity_curve(db, user.id)
+def equity(
+    account_type: str | None = Query(default=None, pattern="^(all|real|paper)$"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return equity_curve(db, user.id, account_type)
 
 
 @router.get("/dashboard/monthly", response_model=list[MonthlyDashboardPoint])
-def monthly(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return monthly_dashboard(db, user.id)
+def monthly(
+    account_type: str | None = Query(default=None, pattern="^(all|real|paper)$"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return monthly_dashboard(db, user.id, account_type)
 
 
 @router.get("/settings", response_model=UserSettingsOut)

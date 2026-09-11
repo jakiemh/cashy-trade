@@ -29,6 +29,9 @@ export type Signal = {
   taken_by_user: boolean;
 };
 
+export type AccountType = "real" | "paper";
+export type AccountTypeFilter = "all" | AccountType;
+
 export type Trade = {
   id: number;
   signal_id?: number | null;
@@ -46,6 +49,7 @@ export type Trade = {
   pnl_usd?: number | null;
   pnl_pct?: number | null;
   status: "open" | "closed" | string;
+  account_type: AccountType;
   notes?: string | null;
 };
 
@@ -147,6 +151,11 @@ export function setToken(token: string | null) {
   else localStorage.removeItem("cashy_token");
 }
 
+function accountTypeQuery(accountType?: AccountTypeFilter) {
+  if (!accountType || accountType === "all") return "";
+  return `?account_type=${accountType}`;
+}
+
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers = new Headers(options.headers || {});
@@ -234,9 +243,12 @@ export const api = {
     apiFetch<{ trade: Trade | null; cierre_signal_id: number }>(
       `/api/trades/match-cierre/${cierreSignalId}`
     ),
-  stats: () => apiFetch<DashboardStats>("/api/dashboard/stats"),
-  equity: () => apiFetch<EquityPoint[]>("/api/dashboard/equity"),
-  monthlyStats: () => apiFetch<MonthlyDashboardPoint[]>("/api/dashboard/monthly"),
+  stats: (accountType?: AccountTypeFilter) =>
+    apiFetch<DashboardStats>(`/api/dashboard/stats${accountTypeQuery(accountType)}`),
+  equity: (accountType?: AccountTypeFilter) =>
+    apiFetch<EquityPoint[]>(`/api/dashboard/equity${accountTypeQuery(accountType)}`),
+  monthlyStats: (accountType?: AccountTypeFilter) =>
+    apiFetch<MonthlyDashboardPoint[]>(`/api/dashboard/monthly${accountTypeQuery(accountType)}`),
   adminStats: () => apiFetch<AdminStats>("/api/admin/stats"),
   adminUsers: () => apiFetch<AdminUser[]>("/api/admin/users"),
   updateAdminUser: (
