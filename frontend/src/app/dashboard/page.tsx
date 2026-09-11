@@ -7,7 +7,7 @@ import EquityCurve from "@/components/EquityCurve";
 import MonthlyStats from "@/components/MonthlyStats";
 import { PageHeader, StatCard } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
-import { api, DashboardStats, EquityPoint, MonthlyDashboardPoint, getToken } from "@/lib/api";
+import { AccountTypeFilter, api, DashboardStats, EquityPoint, MonthlyDashboardPoint, getToken } from "@/lib/api";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -15,6 +15,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [equity, setEquity] = useState<EquityPoint[]>([]);
   const [monthly, setMonthly] = useState<MonthlyDashboardPoint[]>([]);
+  const [accountFilter, setAccountFilter] = useState<AccountTypeFilter>("all");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -24,24 +25,47 @@ export default function DashboardPage() {
     }
 
     api
-      .stats()
+      .stats(accountFilter)
       .then(setStats)
       .catch((err) => setError(err instanceof Error ? err.message : t("common.error")));
 
     api
-      .equity()
+      .equity(accountFilter)
       .then(setEquity)
       .catch(() => setEquity([]));
 
     api
-      .monthlyStats()
+      .monthlyStats(accountFilter)
       .then(setMonthly)
       .catch(() => setMonthly([]));
-  }, [router, t]);
+  }, [router, t, accountFilter]);
 
   return (
     <AppShell>
       <PageHeader title={t("dashboard.title")} subtitle={t("dashboard.subtitle")} />
+      <div className="mb-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={accountFilter === "all" ? "nav-pill-active" : "nav-pill"}
+          onClick={() => setAccountFilter("all")}
+        >
+          {t("dashboard.filterAll")}
+        </button>
+        <button
+          type="button"
+          className={accountFilter === "real" ? "nav-pill-active" : "nav-pill"}
+          onClick={() => setAccountFilter("real")}
+        >
+          {t("dashboard.filterReal")}
+        </button>
+        <button
+          type="button"
+          className={accountFilter === "paper" ? "nav-pill-active" : "nav-pill"}
+          onClick={() => setAccountFilter("paper")}
+        >
+          {t("dashboard.filterPaper")}
+        </button>
+      </div>
       {error ? <p className="text-rose-600">{error}</p> : null}
       {stats ? (
         <>

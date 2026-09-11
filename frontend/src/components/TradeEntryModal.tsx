@@ -4,7 +4,14 @@ import { FormEvent, useEffect, useState } from "react";
 import Modal from "@/components/Modal";
 import { formatMoney } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
-import { api, Signal } from "@/lib/api";
+import { AccountType, api, Signal } from "@/lib/api";
+
+const ACCOUNT_TYPE_STORAGE_KEY = "cashy_account_type";
+
+function getStoredAccountType(): AccountType {
+  if (typeof window === "undefined") return "real";
+  return localStorage.getItem(ACCOUNT_TYPE_STORAGE_KEY) === "paper" ? "paper" : "real";
+}
 
 type TradeEntryModalProps = {
   signal: Signal | null;
@@ -20,6 +27,7 @@ export default function TradeEntryModal({ signal, open, onClose, onSuccess }: Tr
   const [stopLoss, setStopLoss] = useState("");
   const [takeProfit, setTakeProfit] = useState("");
   const [notes, setNotes] = useState("");
+  const [accountType, setAccountType] = useState<AccountType>("real");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -30,6 +38,7 @@ export default function TradeEntryModal({ signal, open, onClose, onSuccess }: Tr
     setStopLoss(signal.stop_loss != null ? String(signal.stop_loss) : "");
     setTakeProfit(signal.take_profit != null ? String(signal.take_profit) : "");
     setNotes("");
+    setAccountType(getStoredAccountType());
     setError("");
   }, [signal, open]);
 
@@ -49,7 +58,9 @@ export default function TradeEntryModal({ signal, open, onClose, onSuccess }: Tr
         stop_loss: stopLoss ? Number(stopLoss) : null,
         take_profit: takeProfit ? Number(takeProfit) : null,
         notes: notes || null,
+        account_type: accountType,
       });
+      localStorage.setItem(ACCOUNT_TYPE_STORAGE_KEY, accountType);
       onSuccess();
       onClose();
     } catch (err) {
@@ -77,6 +88,18 @@ export default function TradeEntryModal({ signal, open, onClose, onSuccess }: Tr
               target: formatMoney(signal.take_profit),
             })}
           </p>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm text-muted">{t("trade.accountType")}</label>
+          <select
+            className="input-field"
+            value={accountType}
+            onChange={(e) => setAccountType(e.target.value as AccountType)}
+          >
+            <option value="real">{t("trade.accountReal")}</option>
+            <option value="paper">{t("trade.accountPaper")}</option>
+          </select>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">

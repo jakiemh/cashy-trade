@@ -10,8 +10,15 @@ def _month_key(dt: datetime) -> str:
     return dt.strftime("%Y-%m")
 
 
-def dashboard_stats(db: Session, user_id: int) -> dict:
-    trades = db.query(Trade).filter(Trade.user_id == user_id).all()
+def _trade_query(db: Session, user_id: int, account_type: str | None = None):
+    query = db.query(Trade).filter(Trade.user_id == user_id)
+    if account_type and account_type != "all":
+        query = query.filter(Trade.account_type == account_type)
+    return query
+
+
+def dashboard_stats(db: Session, user_id: int, account_type: str | None = None) -> dict:
+    trades = _trade_query(db, user_id, account_type).all()
     closed = [t for t in trades if t.status == "closed"]
     open_trades = [t for t in trades if t.status == "open"]
     wins = [t for t in closed if (t.pnl_usd or 0) > 0]
@@ -49,10 +56,10 @@ def dashboard_stats(db: Session, user_id: int) -> dict:
     }
 
 
-def equity_curve(db: Session, user_id: int) -> list[dict]:
+def equity_curve(db: Session, user_id: int, account_type: str | None = None) -> list[dict]:
     closed = (
-        db.query(Trade)
-        .filter(Trade.user_id == user_id, Trade.status == "closed", Trade.exit_at.isnot(None))
+        _trade_query(db, user_id, account_type)
+        .filter(Trade.status == "closed", Trade.exit_at.isnot(None))
         .order_by(Trade.exit_at.asc())
         .all()
     )
@@ -71,8 +78,8 @@ def equity_curve(db: Session, user_id: int) -> list[dict]:
     return points
 
 
-def monthly_dashboard(db: Session, user_id: int) -> list[dict]:
-    trades = db.query(Trade).filter(Trade.user_id == user_id).all()
+def monthly_dashboard(db: Session, user_id: int, account_type: str | None = None) -> list[dict]:
+    trades = _trade_query(db, user_id, account_type).all()
     taken_signal_ids = {t.signal_id for t in trades if t.signal_id is not None}
 
     compra_signals = db.query(Signal).filter(Signal.type == "COMPRA").all()

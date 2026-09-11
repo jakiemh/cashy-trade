@@ -121,3 +121,11 @@ def ensure_schema() -> None:
         with engine.begin() as conn:
             conn.execute(text(ddl))
 
+    if "trades" in tables:
+        columns = {col["name"] for col in inspector.get_columns("trades")}
+        if "account_type" not in columns:
+            with engine.begin() as conn:
+                conn.execute(
+                    text("ALTER TABLE trades ADD COLUMN account_type VARCHAR(10) DEFAULT 'real'")
+                )
+

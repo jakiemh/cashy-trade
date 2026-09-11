@@ -105,6 +105,7 @@ class Trade(Base):
     pnl_usd: Mapped[float | None] = mapped_column(Float, nullable=True)
     pnl_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
     status: Mapped[str] = mapped_column(String(20), default="open", index=True)
+    account_type: Mapped[str] = mapped_column(String(10), default="real", index=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="trades")

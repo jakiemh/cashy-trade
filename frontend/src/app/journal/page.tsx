@@ -108,6 +108,9 @@ export default function JournalPage() {
               <Badge tone={trade.status === "open" ? "warn" : trade.pnl_pct && trade.pnl_pct >= 0 ? "good" : "bad"}>
                 {trade.status === "open" ? t("common.open") : t("common.closed")}
               </Badge>
+              <Badge tone={trade.account_type === "paper" ? "neutral" : "good"}>
+                {trade.account_type === "paper" ? t("trade.accountPaper") : t("trade.accountReal")}
+              </Badge>
               <span className="text-sm text-muted">{new Date(trade.entry_at).toLocaleString()}</span>
             </div>
             <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-2">

@@ -97,6 +97,7 @@ def create_trade(
         stop_loss=payload.stop_loss if payload.stop_loss is not None else (signal.stop_loss if signal else None),
         take_profit=payload.take_profit if payload.take_profit is not None else (signal.take_profit if signal else None),
         notes=payload.notes,
+        account_type=payload.account_type,
         status="open",
     )
     db.add(trade)
@@ -153,6 +154,8 @@ def update_trade(
         trade.take_profit = payload.take_profit
     if payload.notes is not None:
         trade.notes = payload.notes
+    if payload.account_type is not None:
+        trade.account_type = payload.account_type
 
     if trade.status == "closed":
         if payload.exit_price is not None:

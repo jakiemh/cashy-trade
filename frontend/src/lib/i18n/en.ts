@@ -96,6 +96,9 @@ export const en: Messages = {
     signalsShort: "Signals",
     tradesShort: "Trades",
     closedShort: "closed",
+    filterAll: "All",
+    filterReal: "Real account",
+    filterPaper: "Demo / paper",
   },
   journal: {
     title: "Journal",
@@ -223,6 +226,9 @@ export const en: Messages = {
     closeSubmit: "Log exit",
     cierreHint: "Suggested price from CIERRE signal: {price}",
     estimatedPnl: "Estimated P&L",
+    accountType: "Account type",
+    accountReal: "Real account",
+    accountPaper: "Demo / paper",
   },
   cashy: {
     greeting: "Hola, soy {name}. Pregúntame por señales, trades o stats.",

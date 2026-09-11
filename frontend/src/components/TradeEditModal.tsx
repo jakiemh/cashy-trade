@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Modal from "@/components/Modal";
 import { formatMoney, formatPct } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
-import { api, Trade } from "@/lib/api";
+import { AccountType, api, Trade } from "@/lib/api";
 
 type TradeEditModalProps = {
   trade: Trade | null;
@@ -31,6 +31,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
   const [exitAt, setExitAt] = useState("");
   const [exitReason, setExitReason] = useState("manual");
   const [notes, setNotes] = useState("");
+  const [accountType, setAccountType] = useState<AccountType>("real");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -44,6 +45,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
     setExitAt(toDatetimeLocalValue(trade.exit_at));
     setExitReason(trade.exit_reason || "manual");
     setNotes(trade.notes || "");
+    setAccountType(trade.account_type || "real");
     setError("");
   }, [trade, open]);
 
@@ -59,6 +61,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
         stop_loss: stopLoss ? Number(stopLoss) : null,
         take_profit: takeProfit ? Number(takeProfit) : null,
         notes: notes || null,
+        account_type: accountType,
       };
       if (trade.status === "closed") {
         payload.exit_price = Number(exitPrice);
@@ -90,6 +93,18 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
       subtitle={trade.status === "closed" ? t("journal.editClosedHint") : t("journal.editOpenHint")}
     >
       <form className="space-y-4" onSubmit={onSubmit}>
+        <div>
+          <label className="mb-2 block text-sm text-muted">{t("trade.accountType")}</label>
+          <select
+            className="input-field"
+            value={accountType}
+            onChange={(e) => setAccountType(e.target.value as AccountType)}
+          >
+            <option value="real">{t("trade.accountReal")}</option>
+            <option value="paper">{t("trade.accountPaper")}</option>
+          </select>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm text-muted">{t("journal.entry")}</label>

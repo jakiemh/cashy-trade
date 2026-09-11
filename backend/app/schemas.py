@@ -1,6 +1,10 @@
 from datetime import datetime
 
+from typing import Literal
+
 from pydantic import BaseModel, EmailStr, Field
+
+AccountType = Literal["real", "paper"]
 
 
 class AdminTestEmailIn(BaseModel):
@@ -116,6 +120,7 @@ class TradeCreate(BaseModel):
     stop_loss: float | None = None
     take_profit: float | None = None
     notes: str | None = None
+    account_type: AccountType = "real"
 
 
 class TradeClose(BaseModel):
@@ -134,6 +139,7 @@ class TradeUpdate(BaseModel):
     exit_at: datetime | None = None
     exit_reason: str | None = None
     notes: str | None = None
+    account_type: AccountType | None = None
 
 
 class TradeOut(BaseModel):
@@ -153,6 +159,7 @@ class TradeOut(BaseModel):
     pnl_usd: float | None
     pnl_pct: float | None
     status: str
+    account_type: AccountType
     notes: str | None
 
     model_config = {"from_attributes": True}

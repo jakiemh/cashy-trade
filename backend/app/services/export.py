@@ -24,6 +24,7 @@ CSV_HEADERS = [
     "setup_name",
     "strategy",
     "signal_id",
+    "account_type",
     "notes",
 ]
 
@@ -57,6 +58,7 @@ def trades_to_csv(db: Session, user_id: int) -> str:
                 trade.setup_name or "",
                 trade.strategy or "",
                 trade.signal_id or "",
+                trade.account_type or "real",
                 (trade.notes or "").replace("\n", " "),
             ]
         )

@@ -94,6 +94,9 @@ export const es = {
     signalsShort: "Señales",
     tradesShort: "Trades",
     closedShort: "cerrados",
+    filterAll: "Todos",
+    filterReal: "Cuenta real",
+    filterPaper: "Demo / paper",
   },
   journal: {
     title: "Bitácora",
@@ -221,6 +224,9 @@ export const es = {
     closeSubmit: "Registrar salida",
     cierreHint: "Precio sugerido por señal CIERRE: {price}",
     estimatedPnl: "P&L estimado",
+    accountType: "Tipo de cuenta",
+    accountReal: "Cuenta real",
+    accountPaper: "Demo / paper",
   },
   cashy: {
     greeting: "Hola, soy {name}. Pregúntame por señales, trades o stats.",
