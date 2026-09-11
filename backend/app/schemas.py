@@ -176,6 +176,16 @@ class EquityPoint(BaseModel):
     cumulative_pnl_usd: float
 
 
+class MonthlyDashboardPoint(BaseModel):
+    month: str
+    signals_received: int
+    trades_taken: int
+    conversion_pct: float
+    pnl_usd: float
+    win_rate: float
+    closed_trades: int
+
+
 class AdminStatsOut(BaseModel):
     total_users: int
     total_signals: int

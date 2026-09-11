@@ -4,15 +4,17 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppShell from "@/components/AppShell";
 import EquityCurve from "@/components/EquityCurve";
+import MonthlyStats from "@/components/MonthlyStats";
 import { PageHeader, StatCard } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
-import { api, DashboardStats, EquityPoint, getToken } from "@/lib/api";
+import { api, DashboardStats, EquityPoint, MonthlyDashboardPoint, getToken } from "@/lib/api";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { t } = useLocale();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [equity, setEquity] = useState<EquityPoint[]>([]);
+  const [monthly, setMonthly] = useState<MonthlyDashboardPoint[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -30,6 +32,11 @@ export default function DashboardPage() {
       .equity()
       .then(setEquity)
       .catch(() => setEquity([]));
+
+    api
+      .monthlyStats()
+      .then(setMonthly)
+      .catch(() => setMonthly([]));
   }, [router, t]);
 
   return (
@@ -65,6 +72,9 @@ export default function DashboardPage() {
               value={`${stats.open_trades}`}
               hint={`${stats.total_trades} ${t("dashboard.totalTrades")}`}
             />
+          </div>
+          <div className="mt-4">
+            <MonthlyStats points={monthly} />
           </div>
         </>
       ) : (

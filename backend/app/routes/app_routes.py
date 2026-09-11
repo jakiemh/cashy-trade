@@ -7,6 +7,7 @@ from app.models import User, UserSettings, WatchlistItem
 from app.schemas import (
     DashboardStats,
     EquityPoint,
+    MonthlyDashboardPoint,
     NewsItemOut,
     QuoteOut,
     UserSettingsOut,
@@ -17,7 +18,7 @@ from app.schemas import (
 )
 from app.services.market import DEFAULT_UNIVERSE, get_quote
 from app.services.news import get_news
-from app.services.stats import dashboard_stats, equity_curve
+from app.services.stats import dashboard_stats, equity_curve, monthly_dashboard
 
 router = APIRouter(tags=["app"])
 
@@ -30,6 +31,11 @@ def stats(user: User = Depends(get_current_user), db: Session = Depends(get_db))
 @router.get("/dashboard/equity", response_model=list[EquityPoint])
 def equity(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return equity_curve(db, user.id)
+
+
+@router.get("/dashboard/monthly", response_model=list[MonthlyDashboardPoint])
+def monthly(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return monthly_dashboard(db, user.id)
 
 
 @router.get("/settings", response_model=UserSettingsOut)

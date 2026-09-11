@@ -1,8 +1,13 @@
+from collections import defaultdict
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
 from app.models import Signal, Trade
+
+
+def _month_key(dt: datetime) -> str:
+    return dt.strftime("%Y-%m")
 
 
 def dashboard_stats(db: Session, user_id: int) -> dict:
@@ -63,4 +68,56 @@ def equity_curve(db: Session, user_id: int) -> list[dict]:
                 "cumulative_pnl_usd": round(cumulative, 2),
             }
         )
+    return points
+
+
+def monthly_dashboard(db: Session, user_id: int) -> list[dict]:
+    trades = db.query(Trade).filter(Trade.user_id == user_id).all()
+    taken_signal_ids = {t.signal_id for t in trades if t.signal_id is not None}
+
+    compra_signals = db.query(Signal).filter(Signal.type == "COMPRA").all()
+    signals_by_month: dict[str, set[int]] = defaultdict(set)
+    for signal in compra_signals:
+        signals_by_month[_month_key(signal.timestamp)].add(signal.id)
+
+    trades_taken_by_month: dict[str, int] = defaultdict(int)
+    for month, signal_ids in signals_by_month.items():
+        trades_taken_by_month[month] = len(
+            [signal_id for signal_id in signal_ids if signal_id in taken_signal_ids]
+        )
+
+    closed_by_month: dict[str, list[Trade]] = defaultdict(list)
+    for trade in trades:
+        if trade.status == "closed" and trade.exit_at is not None:
+            closed_by_month[_month_key(trade.exit_at)].append(trade)
+
+    all_months = sorted(
+        set(signals_by_month.keys())
+        | set(trades_taken_by_month.keys())
+        | set(closed_by_month.keys())
+    )
+
+    points = []
+    for month in all_months:
+        signals_received = len(signals_by_month.get(month, set()))
+        trades_taken = trades_taken_by_month.get(month, 0)
+        conversion = (trades_taken / signals_received * 100) if signals_received else 0.0
+
+        closed = closed_by_month.get(month, [])
+        pnl_usd = sum(trade.pnl_usd or 0 for trade in closed)
+        wins = len([trade for trade in closed if (trade.pnl_usd or 0) > 0])
+        win_rate = (wins / len(closed) * 100) if closed else 0.0
+
+        points.append(
+            {
+                "month": month,
+                "signals_received": signals_received,
+                "trades_taken": trades_taken,
+                "conversion_pct": round(conversion, 1),
+                "pnl_usd": round(pnl_usd, 2),
+                "win_rate": round(win_rate, 1),
+                "closed_trades": len(closed),
+            }
+        )
+
     return points
