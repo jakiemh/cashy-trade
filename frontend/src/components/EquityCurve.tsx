@@ -6,9 +6,10 @@ import { formatMoney } from "@/components/ui";
 
 type EquityCurveProps = {
   points: EquityPoint[];
+  filtered?: boolean;
 };
 
-export default function EquityCurve({ points }: EquityCurveProps) {
+export default function EquityCurve({ points, filtered = false }: EquityCurveProps) {
   const { t } = useLocale();
 
   if (!points.length) {
@@ -48,7 +49,9 @@ export default function EquityCurve({ points }: EquityCurveProps) {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div>
           <h3 className="text-sm font-medium text-slate-700">{t("dashboard.equityTitle")}</h3>
-          <p className="text-xs text-muted">{t("dashboard.equitySubtitle")}</p>
+          <p className="text-xs text-muted">
+            {filtered ? t("dashboard.equitySubtitleFiltered") : t("dashboard.equitySubtitle")}
+          </p>
         </div>
         <p className={`text-lg font-semibold ${positive ? "text-emerald-600" : "text-rose-600"}`}>
           {formatMoney(last.cumulative_pnl_usd)}
