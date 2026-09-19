@@ -193,6 +193,16 @@ class MonthlyDashboardPoint(BaseModel):
     closed_trades: int
 
 
+class WeeklyDashboardPoint(BaseModel):
+    week: str
+    signals_received: int
+    trades_taken: int
+    conversion_pct: float
+    pnl_usd: float
+    win_rate: float
+    closed_trades: int
+
+
 class AdminStatsOut(BaseModel):
     total_users: int
     total_signals: int

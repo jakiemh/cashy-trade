@@ -71,14 +71,27 @@ export type EquityPoint = {
   cumulative_pnl_usd: number;
 };
 
-export type MonthlyDashboardPoint = {
-  month: string;
+export type PeriodDashboardPoint = {
+  period: string;
   signals_received: number;
   trades_taken: number;
   conversion_pct: number;
   pnl_usd: number;
   win_rate: number;
   closed_trades: number;
+};
+
+export type MonthlyDashboardPoint = Omit<PeriodDashboardPoint, "period"> & {
+  month: string;
+};
+
+export type WeeklyDashboardPoint = Omit<PeriodDashboardPoint, "period"> & {
+  week: string;
+};
+
+export type DashboardDateRange = {
+  from?: string;
+  to?: string;
 };
 
 export type AdminStats = {
@@ -151,9 +164,13 @@ export function setToken(token: string | null) {
   else localStorage.removeItem("cashy_token");
 }
 
-function accountTypeQuery(accountType?: AccountTypeFilter) {
-  if (!accountType || accountType === "all") return "";
-  return `?account_type=${accountType}`;
+function dashboardQuery(accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) {
+  const query = new URLSearchParams();
+  if (accountType && accountType !== "all") query.set("account_type", accountType);
+  if (dateRange?.from) query.set("from_date", dateRange.from);
+  if (dateRange?.to) query.set("to_date", dateRange.to);
+  const suffix = query.toString();
+  return suffix ? `?${suffix}` : "";
 }
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -243,12 +260,14 @@ export const api = {
     apiFetch<{ trade: Trade | null; cierre_signal_id: number }>(
       `/api/trades/match-cierre/${cierreSignalId}`
     ),
-  stats: (accountType?: AccountTypeFilter) =>
-    apiFetch<DashboardStats>(`/api/dashboard/stats${accountTypeQuery(accountType)}`),
-  equity: (accountType?: AccountTypeFilter) =>
-    apiFetch<EquityPoint[]>(`/api/dashboard/equity${accountTypeQuery(accountType)}`),
-  monthlyStats: (accountType?: AccountTypeFilter) =>
-    apiFetch<MonthlyDashboardPoint[]>(`/api/dashboard/monthly${accountTypeQuery(accountType)}`),
+  stats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
+    apiFetch<DashboardStats>(`/api/dashboard/stats${dashboardQuery(accountType, dateRange)}`),
+  equity: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
+    apiFetch<EquityPoint[]>(`/api/dashboard/equity${dashboardQuery(accountType, dateRange)}`),
+  monthlyStats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
+    apiFetch<MonthlyDashboardPoint[]>(`/api/dashboard/monthly${dashboardQuery(accountType, dateRange)}`),
+  weeklyStats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
+    apiFetch<WeeklyDashboardPoint[]>(`/api/dashboard/weekly${dashboardQuery(accountType, dateRange)}`),
   adminStats: () => apiFetch<AdminStats>("/api/admin/stats"),
   adminUsers: () => apiFetch<AdminUser[]>("/api/admin/users"),
   updateAdminUser: (
