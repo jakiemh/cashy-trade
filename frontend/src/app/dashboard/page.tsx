@@ -18,8 +18,20 @@ import {
   WeeklyDashboardPoint,
   getToken,
 } from "@/lib/api";
+import {
+  DATE_PRESET_IDS,
+  DatePresetId,
+  detectActiveDatePreset,
+  getDatePresetRange,
+} from "@/lib/datePresets";
 
 type PeriodView = "week" | "month";
+
+const PRESET_LABEL_KEY: Record<DatePresetId, "dashboard.presetThisWeek" | "dashboard.presetThisMonth" | "dashboard.presetLast30Days"> = {
+  thisWeek: "dashboard.presetThisWeek",
+  thisMonth: "dashboard.presetThisMonth",
+  last30Days: "dashboard.presetLast30Days",
+};
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -43,6 +55,13 @@ export default function DashboardPage() {
   }, [dateFrom, dateTo]);
 
   const hasDateFilter = Boolean(dateFrom || dateTo);
+  const activePreset = detectActiveDatePreset(dateFrom, dateTo);
+
+  function applyPreset(id: DatePresetId) {
+    const { from, to } = getDatePresetRange(id);
+    setDateFrom(from);
+    setDateTo(to);
+  }
 
   useEffect(() => {
     if (!getToken()) {
@@ -99,6 +118,18 @@ export default function DashboardPage() {
       </div>
 
       <div className="glass-card mb-4 flex flex-wrap items-end gap-3 p-4">
+        <div className="flex w-full flex-wrap gap-2 pb-1">
+          {DATE_PRESET_IDS.map((id) => (
+            <button
+              key={id}
+              type="button"
+              className={activePreset === id ? "nav-pill-active" : "nav-pill"}
+              onClick={() => applyPreset(id)}
+            >
+              {t(PRESET_LABEL_KEY[id])}
+            </button>
+          ))}
+        </div>
         <div>
           <label htmlFor="dashboard-from" className="mb-1 block text-xs font-medium text-muted">
             {t("dashboard.dateFrom")}
