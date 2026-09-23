@@ -25,6 +25,7 @@ export type Signal = {
   current_price?: number | null;
   distance_to_stop_pct?: number | null;
   is_active: boolean;
+  bot_executed: boolean;
   open_signal_id?: number | null;
   taken_by_user: boolean;
 };
@@ -118,6 +119,7 @@ export type SignalFilters = {
   symbol?: string;
   setup?: string;
   taken?: boolean;
+  bot_executed?: boolean;
   since?: string;
 };
 
@@ -216,6 +218,7 @@ export const api = {
     if (params?.symbol) query.set("symbol", params.symbol.toUpperCase());
     if (params?.setup) query.set("setup", params.setup);
     if (params?.taken != null) query.set("taken", params.taken ? "true" : "false");
+    if (params?.bot_executed != null) query.set("bot_executed", params.bot_executed ? "true" : "false");
     if (params?.since) query.set("since", params.since);
     const suffix = query.toString() ? `?${query.toString()}` : "";
     return apiFetch<Signal[]>(`/api/signals${suffix}`);

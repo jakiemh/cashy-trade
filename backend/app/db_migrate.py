@@ -40,6 +40,11 @@ def ensure_schema() -> None:
 
                 conn.execute(text("ALTER TABLE signals ADD COLUMN entry_qty FLOAT"))
 
+        if "bot_executed" not in columns:
+            default = "TRUE" if engine.dialect.name != "sqlite" else "1"
+            with engine.begin() as conn:
+                conn.execute(text(f"ALTER TABLE signals ADD COLUMN bot_executed BOOLEAN DEFAULT {default}"))
+
 
 
     if "push_subscriptions" not in tables:

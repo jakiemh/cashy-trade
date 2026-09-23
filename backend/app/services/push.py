@@ -37,7 +37,8 @@ def notify_users_new_signal(db: Session, signal: dict[str, Any]) -> int:
         logger.warning("pywebpush not installed; skipping push notifications")
         return 0
 
-    title = f"{signal.get('type', 'Signal')} {signal.get('symbol', '')}".strip()
+    prefix = "" if signal.get("bot_executed", True) else "Referencia · "
+    title = f"{prefix}{signal.get('type', 'Signal')} {signal.get('symbol', '')}".strip()
     body = _signal_body(signal)
     payload = json.dumps({"title": title, "body": body, "url": "/signals"})
     sent = 0
@@ -75,9 +76,12 @@ def notify_users_new_signal(db: Session, signal: dict[str, Any]) -> int:
 
 def _signal_body(signal: dict[str, Any]) -> str:
     symbol = signal.get("symbol", "")
+    reference = "" if signal.get("bot_executed", True) else "Bot no entró · "
     if signal.get("type") == "COMPRA":
         price = signal.get("entry_price")
-        return f"Entrada ${price:.2f}" if price is not None else "Nueva señal de compra"
+        if price is not None:
+            return f"{reference}Entrada ${price:.2f}"
+        return f"{reference}Nueva señal de compra"
     if signal.get("type") == "CIERRE":
         pnl = signal.get("pnl_pct")
         return f"Resultado {pnl:+.1f}%" if pnl is not None else "Cierre de posición"

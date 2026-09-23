@@ -75,6 +75,7 @@ class Signal(Base):
     distance_to_stop_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    bot_executed: Mapped[bool] = mapped_column(Boolean, default=True, index=True)
     open_signal_id: Mapped[int | None] = mapped_column(ForeignKey("signals.id"), nullable=True)
 
     trades: Mapped[list["Trade"]] = relationship(back_populates="signal")
