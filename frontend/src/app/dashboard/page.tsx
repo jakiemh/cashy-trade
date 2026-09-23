@@ -180,11 +180,16 @@ export default function DashboardPage() {
               value={`${stats.win_rate}%`}
               hint={`${stats.closed_trades} ${t("dashboard.closedTrades")}`}
             />
-            <StatCard label={t("dashboard.totalPnl")} value={`$${stats.total_pnl_usd.toFixed(2)}`} />
+            <StatCard
+              label={t("dashboard.totalPnl")}
+              value={`${stats.total_pnl_usd >= 0 ? "" : "-"}$${Math.abs(stats.total_pnl_usd).toFixed(2)}`}
+              valueTone={stats.total_pnl_usd >= 0 ? "positive" : "negative"}
+            />
             <StatCard
               label={t("dashboard.avgPnl")}
               value={`${stats.avg_pnl_pct >= 0 ? "+" : ""}${stats.avg_pnl_pct.toFixed(1)}%`}
               hint={t("dashboard.perClosedTrade")}
+              valueTone={stats.avg_pnl_pct >= 0 ? "positive" : "negative"}
             />
             <StatCard
               label={hasDateFilter ? t("dashboard.signalsInPeriod") : t("dashboard.signalsToday")}

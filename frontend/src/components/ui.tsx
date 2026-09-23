@@ -1,8 +1,27 @@
-export function StatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
+export function StatCard({
+  label,
+  value,
+  hint,
+  valueTone = "brand",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  valueTone?: "brand" | "positive" | "negative" | "neutral";
+}) {
+  const valueClass =
+    valueTone === "positive"
+      ? "text-3xl font-semibold text-emerald-600"
+      : valueTone === "negative"
+        ? "text-3xl font-semibold text-rose-600"
+        : valueTone === "neutral"
+          ? "text-3xl font-semibold text-slate-800"
+          : "bg-brand-gradient bg-clip-text text-3xl font-semibold text-transparent";
+
   return (
     <div className="glass-card">
       <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 bg-brand-gradient bg-clip-text text-3xl font-semibold text-transparent">{value}</p>
+      <p className={`mt-2 ${valueClass}`}>{value}</p>
       {hint ? <p className="mt-2 text-xs text-slate-400">{hint}</p> : null}
     </div>
   );
