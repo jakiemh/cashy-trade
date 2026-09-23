@@ -12,6 +12,7 @@ import { api, getToken, Signal, Trade } from "@/lib/api";
 
 type ActiveFilter = "all" | "active";
 type TakenFilter = "all" | "taken" | "not_taken";
+type BotFilter = "all" | "executed" | "reference";
 type TypeFilter = "all" | "COMPRA" | "CIERRE" | "AVISO";
 
 export default function SignalsPage() {
@@ -21,6 +22,7 @@ export default function SignalsPage() {
   const [activeFilter, setActiveFilter] = useState<ActiveFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [takenFilter, setTakenFilter] = useState<TakenFilter>("all");
+  const [botFilter, setBotFilter] = useState<BotFilter>("all");
   const [symbolFilter, setSymbolFilter] = useState("");
   const [setupFilter, setSetupFilter] = useState("");
   const [error, setError] = useState("");
@@ -38,8 +40,10 @@ export default function SignalsPage() {
     if (setupFilter.trim()) params.setup = setupFilter.trim();
     if (takenFilter === "taken") params.taken = true;
     if (takenFilter === "not_taken") params.taken = false;
+    if (botFilter === "executed") params.bot_executed = true;
+    if (botFilter === "reference") params.bot_executed = false;
     return params;
-  }, [activeFilter, typeFilter, symbolFilter, setupFilter, takenFilter]);
+  }, [activeFilter, typeFilter, symbolFilter, setupFilter, takenFilter, botFilter]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -113,7 +117,7 @@ export default function SignalsPage() {
         </div>
       </div>
 
-      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <input
           className="input-field uppercase"
           placeholder={t("signals.filterTicker")}
@@ -131,9 +135,18 @@ export default function SignalsPage() {
           value={takenFilter}
           onChange={(e) => setTakenFilter(e.target.value as TakenFilter)}
         >
-          <option value="all">{t("signals.takenAll")}</option>
-          <option value="taken">{t("signals.takenOnly")}</option>
-          <option value="not_taken">{t("signals.notTaken")}</option>
+          <option value="all">{t("signals.journalAll")}</option>
+          <option value="taken">{t("signals.journalOnly")}</option>
+          <option value="not_taken">{t("signals.journalNone")}</option>
+        </select>
+        <select
+          className="input-field"
+          value={botFilter}
+          onChange={(e) => setBotFilter(e.target.value as BotFilter)}
+        >
+          <option value="all">{t("signals.botAll")}</option>
+          <option value="executed">{t("signals.botExecutedOnly")}</option>
+          <option value="reference">{t("signals.botReferenceOnly")}</option>
         </select>
         <select
           className="input-field"
@@ -167,13 +180,20 @@ export default function SignalsPage() {
       {error ? <p className="mb-4 text-rose-600">{error}</p> : null}
 
       <div className="space-y-4">
-        {signals.map((signal) => (
-          <div key={signal.id} className="glass-card">
+        {signals.map((signal) => {
+          const isBotReference = signal.bot_executed === false;
+          return (
+          <div
+            key={signal.id}
+            className={`glass-card ${isBotReference ? "border border-dashed border-amber-200/80 bg-amber-50/30" : ""}`}
+          >
             <div className="flex flex-wrap items-center gap-3">
               <Badge
                 tone={
                   signal.type === "COMPRA"
-                    ? "good"
+                    ? isBotReference
+                      ? "warn"
+                      : "good"
                     : signal.type === "CIERRE"
                       ? signal.pnl_pct && signal.pnl_pct >= 0
                         ? "good"
@@ -185,9 +205,17 @@ export default function SignalsPage() {
               </Badge>
               <h3 className="text-lg font-semibold text-slate-800">{signal.symbol}</h3>
               <span className="text-sm text-muted">{new Date(signal.timestamp).toLocaleString()}</span>
+              {isBotReference ? (
+                <Badge tone="warn">{t("signals.botReferenceBadge")}</Badge>
+              ) : signal.type === "COMPRA" ? (
+                <Badge tone="good">{t("signals.botExecutedBadge")}</Badge>
+              ) : null}
               {signal.taken_by_user ? <Badge tone="neutral">{t("common.taken")}</Badge> : null}
               {signal.is_active ? <Badge tone="good">{t("common.active")}</Badge> : null}
             </div>
+            {isBotReference ? (
+              <p className="mt-3 text-xs text-amber-800/90">{t("signals.botReferenceHint")}</p>
+            ) : null}
             {signal.type === "COMPRA" ? (
               <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
                 <p>{t("signals.entry")}: {formatMoney(signal.entry_price)}</p>
@@ -223,7 +251,8 @@ export default function SignalsPage() {
               ) : null}
             </div>
           </div>
-        ))}
+        );
+        })}
         {!loading && !signals.length ? <p className="text-muted">{t("signals.empty")}</p> : null}
       </div>
 

@@ -55,6 +55,7 @@ def list_signals(
     symbol: str | None = Query(default=None),
     setup: str | None = Query(default=None),
     taken: bool | None = Query(default=None),
+    bot_executed: bool | None = Query(default=None),
     since: datetime | None = Query(default=None),
     limit: int = Query(default=100, le=500),
     user: User = Depends(get_current_user),
@@ -74,6 +75,8 @@ def list_signals(
         )
     if since:
         query = query.filter(Signal.timestamp > since)
+    if bot_executed is not None:
+        query = query.filter(Signal.bot_executed.is_(bot_executed))
     signals = query.limit(limit).all()
     serialized = _serialize_signals(db, user.id, signals)
     if taken is not None:

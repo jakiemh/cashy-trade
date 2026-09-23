@@ -35,10 +35,11 @@ def create_signal(db: Session, payload: SignalIn) -> Signal:
         reason=payload.reason,
         current_price=payload.current_price,
         distance_to_stop_pct=payload.distance_to_stop_pct,
+        bot_executed=True if payload.bot_executed is None else payload.bot_executed,
     )
 
     if signal.type == "COMPRA":
-        signal.is_active = True
+        signal.is_active = signal.bot_executed
     elif signal.type == "CIERRE":
         open_signal = _latest_open_signal(db, symbol)
         if open_signal:

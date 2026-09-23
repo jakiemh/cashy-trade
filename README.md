@@ -68,6 +68,8 @@ CASHY_API_KEY = "<ver scripts/.production-secrets.local>"
 
 El bridge incluye seguro `cashy_compra_ok`: si falla el POST de COMPRA, reenvía antes del CIERRE.
 
+En el POST a `/api/signals`, manda `"bot_executed": false` en setups válidos que el bot **no** abrió (Cashy los muestra como **Solo referencia**). Omite el campo o usa `true` cuando el bot sí entró.
+
 ## Flujo de uso
 
 1. Regístrate en `/register`

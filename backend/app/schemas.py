@@ -82,6 +82,7 @@ class SignalIn(BaseModel):
     reason: str | None = None
     current_price: float | None = None
     distance_to_stop_pct: float | None = None
+    bot_executed: bool = True
 
 
 class SignalOut(BaseModel):
@@ -103,6 +104,7 @@ class SignalOut(BaseModel):
     current_price: float | None
     distance_to_stop_pct: float | None
     is_active: bool
+    bot_executed: bool = True
     open_signal_id: int | None
     taken_by_user: bool = False
 
