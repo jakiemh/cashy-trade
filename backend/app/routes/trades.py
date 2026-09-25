@@ -9,6 +9,7 @@ from app.dependencies import get_current_user
 from app.models import Signal, Trade, User
 from app.schemas import TradeClose, TradeCreate, TradeMatchOut, TradeOut, TradeUpdate
 from app.services.export import trades_to_csv
+from app.services.journal_pdf import trades_to_pdf
 from app.services.signals import compute_trade_pnl
 
 router = APIRouter(prefix="/trades", tags=["trades"])
@@ -56,6 +57,17 @@ def export_trades(user: User = Depends(get_current_user), db: Session = Depends(
     return Response(
         content=csv_data,
         media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/export/pdf")
+def export_trades_pdf(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    pdf_bytes = trades_to_pdf(db, user.id, user_name=user.name or user.email)
+    filename = f"cashy_bitacora_{datetime.utcnow().strftime('%Y%m%d')}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 

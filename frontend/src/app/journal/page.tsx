@@ -15,6 +15,7 @@ export default function JournalPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [error, setError] = useState("");
   const [exporting, setExporting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [exitTrade, setExitTrade] = useState<Trade | null>(null);
   const [editTrade, setEditTrade] = useState<Trade | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "open" | "closed">("all");
@@ -45,6 +46,18 @@ export default function JournalPage() {
     }
   }
 
+  async function exportPdf() {
+    setExportingPdf(true);
+    setError("");
+    try {
+      await api.exportTradesPdf();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("common.error"));
+    } finally {
+      setExportingPdf(false);
+    }
+  }
+
   async function deleteTrade(trade: Trade) {
     const ok = window.confirm(t("journal.deleteTradeConfirm", { symbol: trade.symbol }));
     if (!ok) return;
@@ -70,9 +83,14 @@ export default function JournalPage() {
     <AppShell>
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <PageHeader title={t("journal.title")} subtitle={t("journal.subtitle")} />
-        <button type="button" className="btn-secondary" onClick={exportCsv} disabled={exporting}>
-          {exporting ? t("journal.exporting") : t("journal.exportCsv")}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="btn-secondary" onClick={exportPdf} disabled={exportingPdf}>
+            {exportingPdf ? t("journal.exportingPdf") : t("journal.exportPdf")}
+          </button>
+          <button type="button" className="btn-secondary" onClick={exportCsv} disabled={exporting}>
+            {exporting ? t("journal.exporting") : t("journal.exportCsv")}
+          </button>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">

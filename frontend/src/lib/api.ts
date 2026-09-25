@@ -259,6 +259,22 @@ export const api = {
     anchor.click();
     URL.revokeObjectURL(url);
   },
+  exportTradesPdf: async () => {
+    const token = getToken();
+    const response = await fetch(`${API_URL}/api/trades/export/pdf`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `cashy_bitacora_${new Date().toISOString().slice(0, 10)}.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  },
   matchCierreTrade: (cierreSignalId: number) =>
     apiFetch<{ trade: Trade | null; cierre_signal_id: number }>(
       `/api/trades/match-cierre/${cierreSignalId}`
