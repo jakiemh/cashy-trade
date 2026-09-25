@@ -22,3 +22,4 @@ backend/cashy_trade.db
 Thumbs.db
 .vercel
 .env*
+download/
