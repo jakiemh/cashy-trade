@@ -119,7 +119,7 @@ export const en: Messages = {
     title: "Journal",
     subtitle: "Trades you took in your account (demo or real), independent of what the bot did.",
     exportCsv: "Export CSV",
-    exportPdf: "Summary PDF",
+    exportPdf: "Download PDF",
     exporting: "Exporting...",
     exportingPdf: "Generating PDF...",
     all: "All",

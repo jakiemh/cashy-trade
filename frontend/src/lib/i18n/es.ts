@@ -117,7 +117,7 @@ export const es = {
     title: "Bitácora",
     subtitle: "Trades que tú operaste en tu cuenta (demo o real), independiente de lo que haga el bot.",
     exportCsv: "Exportar CSV",
-    exportPdf: "Resumen PDF",
+    exportPdf: "Descargar PDF",
     exporting: "Exportando...",
     exportingPdf: "Generando PDF...",
     all: "Todos",

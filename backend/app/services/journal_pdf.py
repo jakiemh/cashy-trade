@@ -57,6 +57,17 @@ def _pnl_label(trade: Trade) -> str:
     return f"{usd_part} ({pct:+.1f}%)"
 
 
+def _account_label(account_type: str | None) -> str:
+    if not account_type or not str(account_type).strip():
+        return "-"
+    value = str(account_type).strip().lower()
+    if value == "real":
+        return "Real"
+    if value == "paper":
+        return "Paper"
+    return str(account_type).strip().capitalize()
+
+
 class JournalPDF(FPDF):
     def footer(self):
         self.set_y(-12)
@@ -110,8 +121,8 @@ def trades_to_pdf(db: Session, user_id: int, user_name: str = "") -> bytes:
 
     pdf.ln(4)
 
-    col_widths = (32, 28, 62, 22, 48)
-    headers = ("Cierre", "Simbolo", "Estrategia", "Motivo", "PnL")
+    col_widths = (30, 26, 52, 20, 22, 46)
+    headers = ("Cierre", "Simbolo", "Estrategia", "Motivo", "Cuenta", "PnL")
     start_x = 14
     y = pdf.get_y()
 
@@ -150,19 +161,37 @@ def trades_to_pdf(db: Session, user_id: int, user_name: str = "") -> bytes:
             trade.symbol,
             strategy,
             _motivo_label(trade.exit_reason),
+            _account_label(trade.account_type),
         )
         pdf.set_x(start_x)
         pdf.set_text_color(*TEXT)
         for i, text in enumerate(cells):
             pdf.cell(col_widths[i], row_h, text, border=0)
         pdf.set_text_color(*pnl_color)
-        pdf.cell(col_widths[4], row_h, _pnl_label(trade), border=0)
+        pdf.cell(col_widths[5], row_h, _pnl_label(trade), border=0)
         pdf.ln(row_h)
+
+    if closed:
+        avg_pct = sum(t.pnl_pct or 0 for t in closed) / len(closed)
+        pdf.set_x(start_x)
+        pdf.set_font("Helvetica", "B", 9)
+        pdf.set_fill_color(*HEADER_BG)
+        pdf.set_text_color(*TEXT)
+        pdf.cell(col_widths[0], 8, "", fill=True)
+        pdf.cell(col_widths[1], 8, "", fill=True)
+        pdf.cell(col_widths[2], 8, "", fill=True)
+        pdf.cell(col_widths[3], 8, f"TOTAL ({len(closed)})", fill=True)
+        pdf.cell(col_widths[4], 8, "", fill=True)
+        pdf.set_text_color(*(GREEN if total_pnl >= 0 else RED))
+        total_label = f"-${abs(total_pnl):,.2f}" if total_pnl < 0 else f"${total_pnl:,.2f}"
+        pdf.cell(col_widths[5], 8, f"{total_label} (avg {avg_pct:+.1f}%)", fill=True)
+        pdf.ln(8)
+        pdf.set_font("Helvetica", "", 9)
 
     if not closed:
         pdf.set_x(start_x)
         pdf.set_text_color(*MUTED)
-        pdf.cell(sum(col_widths), 10, "No hay trades cerrados en tu bitácora.", ln=True)
+        pdf.cell(sum(col_widths), 10, "No hay trades cerrados en tu bitacora.", ln=True)
 
     buffer = BytesIO()
     pdf.output(buffer)
