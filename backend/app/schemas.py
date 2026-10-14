@@ -165,6 +165,7 @@ class TradeClose(BaseModel):
 class TradeUpdate(BaseModel):
     entry_price: float | None = None
     entry_qty: float | None = None
+    entry_at: datetime | None = None
     stop_loss: float | None = None
     take_profit: float | None = None
     exit_price: float | None = None

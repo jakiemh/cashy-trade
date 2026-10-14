@@ -5,6 +5,7 @@ import Modal from "@/components/Modal";
 import { formatMoney, formatPct } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
 import { api, formatOptionLabel, previewTradePnl, Trade } from "@/lib/api";
+import { datetimeLocalToIso, nowDatetimeLocal } from "@/lib/datetimeLocal";
 
 type TradeExitDefaults = {
   exit_price?: number | null;
@@ -28,6 +29,7 @@ export default function TradeExitModal({
 }: TradeExitModalProps) {
   const { t } = useLocale();
   const [exitPrice, setExitPrice] = useState("");
+  const [exitAt, setExitAt] = useState("");
   const [exitReason, setExitReason] = useState("manual");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
@@ -42,6 +44,7 @@ export default function TradeExitModal({
           ? String(trade.entry_price)
           : "";
     setExitPrice(suggested);
+    setExitAt(nowDatetimeLocal());
     setExitReason(defaults?.exit_price != null ? "signal" : "manual");
     setNotes(defaults?.exit_reason && defaults.exit_price != null ? defaults.exit_reason : "");
     setError("");
@@ -55,6 +58,7 @@ export default function TradeExitModal({
     try {
       await api.closeTrade(trade.id, {
         exit_price: Number(exitPrice),
+        exit_at: exitAt ? datetimeLocalToIso(exitAt) : null,
         exit_reason: exitReason,
         notes: notes || null,
       });
@@ -113,6 +117,16 @@ export default function TradeExitModal({
             />
           </div>
           <div>
+            <label className="mb-2 block text-sm text-muted">{t("trade.exitAt")}</label>
+            <input
+              className="input-field"
+              type="datetime-local"
+              required
+              value={exitAt}
+              onChange={(e) => setExitAt(e.target.value)}
+            />
+          </div>
+          <div className="sm:col-span-2">
             <label className="mb-2 block text-sm text-muted">{t("trade.exitReason")}</label>
             <select
               className="input-field"

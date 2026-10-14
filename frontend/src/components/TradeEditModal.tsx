@@ -13,6 +13,7 @@ import {
   previewTradePnl,
   Trade,
 } from "@/lib/api";
+import { datetimeLocalToIso, toDatetimeLocalValue } from "@/lib/datetimeLocal";
 
 type TradeEditModalProps = {
   trade: Trade | null;
@@ -20,14 +21,6 @@ type TradeEditModalProps = {
   onClose: () => void;
   onSuccess: () => void;
 };
-
-function toDatetimeLocalValue(value?: string | null) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
 
 function toDateValue(value?: string | null) {
   if (!value) return "";
@@ -38,6 +31,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
   const { t } = useLocale();
   const [entryPrice, setEntryPrice] = useState("");
   const [entryQty, setEntryQty] = useState("");
+  const [entryAt, setEntryAt] = useState("");
   const [optionType, setOptionType] = useState<OptionType>("call");
   const [optionSide, setOptionSide] = useState<OptionSide>("long");
   const [strike, setStrike] = useState("");
@@ -56,6 +50,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
     if (!trade || !open) return;
     setEntryPrice(String(trade.entry_price));
     setEntryQty(String(trade.entry_qty));
+    setEntryAt(toDatetimeLocalValue(trade.entry_at));
     setOptionType((trade.option_type as OptionType) || "call");
     setOptionSide((trade.option_side as OptionSide) || "long");
     setStrike(trade.strike != null ? String(trade.strike) : "");
@@ -85,6 +80,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
         notes: notes || null,
         account_type: accountType,
       };
+      if (entryAt) payload.entry_at = datetimeLocalToIso(entryAt);
       if (isOption) {
         payload.option_type = optionType;
         payload.option_side = optionSide;
@@ -94,7 +90,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
       if (trade.status === "closed") {
         payload.exit_price = Number(exitPrice);
         payload.exit_reason = exitReason;
-        if (exitAt) payload.exit_at = new Date(exitAt).toISOString();
+        if (exitAt) payload.exit_at = datetimeLocalToIso(exitAt);
       }
       await api.updateTrade(trade.id, payload);
       onSuccess();
@@ -140,6 +136,17 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
             <option value="real">{t("trade.accountReal")}</option>
             <option value="paper">{t("trade.accountPaper")}</option>
           </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm text-muted">{t("trade.entryAt")}</label>
+          <input
+            className="input-field"
+            type="datetime-local"
+            required
+            value={entryAt}
+            onChange={(e) => setEntryAt(e.target.value)}
+          />
         </div>
 
         {isOption ? (
@@ -277,10 +284,11 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
               </div>
             </div>
             <div>
-              <label className="mb-2 block text-sm text-muted">{t("journal.exit")}</label>
+              <label className="mb-2 block text-sm text-muted">{t("trade.exitAt")}</label>
               <input
                 className="input-field"
                 type="datetime-local"
+                required
                 value={exitAt}
                 onChange={(e) => setExitAt(e.target.value)}
               />
