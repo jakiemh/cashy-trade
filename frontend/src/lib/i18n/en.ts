@@ -114,6 +114,9 @@ export const en: Messages = {
     filterAll: "All",
     filterReal: "Real account",
     filterPaper: "Demo / paper",
+    filterInstrumentAll: "All instruments",
+    filterStock: "Stocks",
+    filterOptions: "Options",
   },
   journal: {
     title: "Journal",

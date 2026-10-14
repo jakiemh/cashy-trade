@@ -29,45 +29,49 @@ router = APIRouter(tags=["app"])
 @router.get("/dashboard/stats", response_model=DashboardStats)
 def stats(
     account_type: str | None = Query(default=None, pattern="^(all|real|paper)$"),
+    instrument_type: str | None = Query(default=None, pattern="^(all|stock|option)$"),
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return dashboard_stats(db, user.id, account_type, from_date, to_date)
+    return dashboard_stats(db, user.id, account_type, from_date, to_date, instrument_type)
 
 
 @router.get("/dashboard/equity", response_model=list[EquityPoint])
 def equity(
     account_type: str | None = Query(default=None, pattern="^(all|real|paper)$"),
+    instrument_type: str | None = Query(default=None, pattern="^(all|stock|option)$"),
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return equity_curve(db, user.id, account_type, from_date, to_date)
+    return equity_curve(db, user.id, account_type, from_date, to_date, instrument_type)
 
 
 @router.get("/dashboard/monthly", response_model=list[MonthlyDashboardPoint])
 def monthly(
     account_type: str | None = Query(default=None, pattern="^(all|real|paper)$"),
+    instrument_type: str | None = Query(default=None, pattern="^(all|stock|option)$"),
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return monthly_dashboard(db, user.id, account_type, from_date, to_date)
+    return monthly_dashboard(db, user.id, account_type, from_date, to_date, instrument_type)
 
 
 @router.get("/dashboard/weekly", response_model=list[WeeklyDashboardPoint])
 def weekly(
     account_type: str | None = Query(default=None, pattern="^(all|real|paper)$"),
+    instrument_type: str | None = Query(default=None, pattern="^(all|stock|option)$"),
     from_date: date | None = Query(default=None),
     to_date: date | None = Query(default=None),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    return weekly_dashboard(db, user.id, account_type, from_date, to_date)
+    return weekly_dashboard(db, user.id, account_type, from_date, to_date, instrument_type)
 
 
 @router.get("/settings", response_model=UserSettingsOut)

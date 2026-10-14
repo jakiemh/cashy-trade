@@ -112,6 +112,9 @@ export const es = {
     filterAll: "Todos",
     filterReal: "Cuenta real",
     filterPaper: "Demo / paper",
+    filterInstrumentAll: "Todos los instrumentos",
+    filterStock: "Acciones",
+    filterOptions: "Opciones",
   },
   journal: {
     title: "Bitácora",

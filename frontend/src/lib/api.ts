@@ -33,6 +33,7 @@ export type Signal = {
 export type AccountType = "real" | "paper";
 export type AccountTypeFilter = "all" | AccountType;
 export type InstrumentType = "stock" | "option";
+export type InstrumentTypeFilter = "all" | InstrumentType;
 export type OptionType = "call" | "put";
 export type OptionSide = "long" | "short";
 
@@ -203,9 +204,14 @@ export function setToken(token: string | null) {
   else localStorage.removeItem("cashy_token");
 }
 
-function dashboardQuery(accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) {
+function dashboardQuery(
+  accountType?: AccountTypeFilter,
+  dateRange?: DashboardDateRange,
+  instrumentType?: InstrumentTypeFilter
+) {
   const query = new URLSearchParams();
   if (accountType && accountType !== "all") query.set("account_type", accountType);
+  if (instrumentType && instrumentType !== "all") query.set("instrument_type", instrumentType);
   if (dateRange?.from) query.set("from_date", dateRange.from);
   if (dateRange?.to) query.set("to_date", dateRange.to);
   const suffix = query.toString();
@@ -300,14 +306,38 @@ export const api = {
     apiFetch<{ trade: Trade | null; cierre_signal_id: number }>(
       `/api/trades/match-cierre/${cierreSignalId}`
     ),
-  stats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
-    apiFetch<DashboardStats>(`/api/dashboard/stats${dashboardQuery(accountType, dateRange)}`),
-  equity: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
-    apiFetch<EquityPoint[]>(`/api/dashboard/equity${dashboardQuery(accountType, dateRange)}`),
-  monthlyStats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
-    apiFetch<MonthlyDashboardPoint[]>(`/api/dashboard/monthly${dashboardQuery(accountType, dateRange)}`),
-  weeklyStats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
-    apiFetch<WeeklyDashboardPoint[]>(`/api/dashboard/weekly${dashboardQuery(accountType, dateRange)}`),
+  stats: (
+    accountType?: AccountTypeFilter,
+    dateRange?: DashboardDateRange,
+    instrumentType?: InstrumentTypeFilter
+  ) =>
+    apiFetch<DashboardStats>(
+      `/api/dashboard/stats${dashboardQuery(accountType, dateRange, instrumentType)}`
+    ),
+  equity: (
+    accountType?: AccountTypeFilter,
+    dateRange?: DashboardDateRange,
+    instrumentType?: InstrumentTypeFilter
+  ) =>
+    apiFetch<EquityPoint[]>(
+      `/api/dashboard/equity${dashboardQuery(accountType, dateRange, instrumentType)}`
+    ),
+  monthlyStats: (
+    accountType?: AccountTypeFilter,
+    dateRange?: DashboardDateRange,
+    instrumentType?: InstrumentTypeFilter
+  ) =>
+    apiFetch<MonthlyDashboardPoint[]>(
+      `/api/dashboard/monthly${dashboardQuery(accountType, dateRange, instrumentType)}`
+    ),
+  weeklyStats: (
+    accountType?: AccountTypeFilter,
+    dateRange?: DashboardDateRange,
+    instrumentType?: InstrumentTypeFilter
+  ) =>
+    apiFetch<WeeklyDashboardPoint[]>(
+      `/api/dashboard/weekly${dashboardQuery(accountType, dateRange, instrumentType)}`
+    ),
   adminStats: () => apiFetch<AdminStats>("/api/admin/stats"),
   adminUsers: () => apiFetch<AdminUser[]>("/api/admin/users"),
   updateAdminUser: (
