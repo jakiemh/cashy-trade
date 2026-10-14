@@ -4,7 +4,15 @@ import { FormEvent, useEffect, useState } from "react";
 import Modal from "@/components/Modal";
 import { formatMoney, formatPct } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
-import { AccountType, api, Trade } from "@/lib/api";
+import {
+  AccountType,
+  api,
+  formatOptionLabel,
+  OptionSide,
+  OptionType,
+  previewTradePnl,
+  Trade,
+} from "@/lib/api";
 
 type TradeEditModalProps = {
   trade: Trade | null;
@@ -21,10 +29,19 @@ function toDatetimeLocalValue(value?: string | null) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function toDateValue(value?: string | null) {
+  if (!value) return "";
+  return String(value).slice(0, 10);
+}
+
 export default function TradeEditModal({ trade, open, onClose, onSuccess }: TradeEditModalProps) {
   const { t } = useLocale();
   const [entryPrice, setEntryPrice] = useState("");
   const [entryQty, setEntryQty] = useState("");
+  const [optionType, setOptionType] = useState<OptionType>("call");
+  const [optionSide, setOptionSide] = useState<OptionSide>("long");
+  const [strike, setStrike] = useState("");
+  const [expiration, setExpiration] = useState("");
   const [stopLoss, setStopLoss] = useState("");
   const [takeProfit, setTakeProfit] = useState("");
   const [exitPrice, setExitPrice] = useState("");
@@ -39,6 +56,10 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
     if (!trade || !open) return;
     setEntryPrice(String(trade.entry_price));
     setEntryQty(String(trade.entry_qty));
+    setOptionType((trade.option_type as OptionType) || "call");
+    setOptionSide((trade.option_side as OptionSide) || "long");
+    setStrike(trade.strike != null ? String(trade.strike) : "");
+    setExpiration(toDateValue(trade.expiration));
     setStopLoss(trade.stop_loss != null ? String(trade.stop_loss) : "");
     setTakeProfit(trade.take_profit != null ? String(trade.take_profit) : "");
     setExitPrice(trade.exit_price != null ? String(trade.exit_price) : "");
@@ -55,6 +76,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
     setSaving(true);
     setError("");
     try {
+      const isOption = trade.instrument_type === "option";
       const payload: Record<string, unknown> = {
         entry_price: Number(entryPrice),
         entry_qty: Number(entryQty),
@@ -63,6 +85,12 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
         notes: notes || null,
         account_type: accountType,
       };
+      if (isOption) {
+        payload.option_type = optionType;
+        payload.option_side = optionSide;
+        payload.strike = Number(strike);
+        payload.expiration = expiration;
+      }
       if (trade.status === "closed") {
         payload.exit_price = Number(exitPrice);
         payload.exit_reason = exitReason;
@@ -80,16 +108,25 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
 
   if (!trade) return null;
 
-  const previewPnlPct =
+  const isOption = trade.instrument_type === "option";
+  const title = isOption ? formatOptionLabel(trade) : trade.symbol;
+  const qtyLabel = isOption ? t("trade.contracts") : t("journal.shares");
+  const priceLabel = isOption ? t("trade.buyPrice") : t("journal.entry");
+
+  const preview =
     trade.status === "closed" && exitPrice && entryPrice
-      ? ((Number(exitPrice) - Number(entryPrice)) / Number(entryPrice)) * 100
+      ? previewTradePnl(Number(entryPrice), Number(entryQty || trade.entry_qty), Number(exitPrice), {
+          instrument_type: trade.instrument_type,
+          option_side: isOption ? optionSide : trade.option_side,
+          contract_multiplier: trade.contract_multiplier,
+        })
       : null;
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={`${t("journal.editTrade")} — ${trade.symbol}`}
+      title={`${t("journal.editTrade")} — ${title}`}
       subtitle={trade.status === "closed" ? t("journal.editClosedHint") : t("journal.editOpenHint")}
     >
       <form className="space-y-4" onSubmit={onSubmit}>
@@ -105,9 +142,58 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
           </select>
         </div>
 
+        {isOption ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm text-muted">{t("trade.optionType")}</label>
+              <select
+                className="input-field"
+                value={optionType}
+                onChange={(e) => setOptionType(e.target.value as OptionType)}
+              >
+                <option value="call">{t("trade.call")}</option>
+                <option value="put">{t("trade.put")}</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm text-muted">{t("trade.optionSide")}</label>
+              <select
+                className="input-field"
+                value={optionSide}
+                onChange={(e) => setOptionSide(e.target.value as OptionSide)}
+              >
+                <option value="long">{t("trade.sideLong")}</option>
+                <option value="short">{t("trade.sideShort")}</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm text-muted">{t("trade.strike")}</label>
+              <input
+                className="input-field"
+                type="number"
+                min="0.01"
+                step="any"
+                required
+                value={strike}
+                onChange={(e) => setStrike(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm text-muted">{t("trade.expiration")}</label>
+              <input
+                className="input-field"
+                type="date"
+                required
+                value={expiration}
+                onChange={(e) => setExpiration(e.target.value)}
+              />
+            </div>
+          </div>
+        ) : null}
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm text-muted">{t("journal.entry")}</label>
+            <label className="mb-2 block text-sm text-muted">{priceLabel}</label>
             <input
               className="input-field"
               type="number"
@@ -119,7 +205,7 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm text-muted">{t("journal.shares")}</label>
+            <label className="mb-2 block text-sm text-muted">{qtyLabel}</label>
             <input
               className="input-field"
               type="number"
@@ -130,39 +216,45 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
               onChange={(e) => setEntryQty(e.target.value)}
             />
           </div>
-          <div>
-            <label className="mb-2 block text-sm text-muted">{t("journal.stop")}</label>
-            <input
-              className="input-field"
-              type="number"
-              min="0"
-              step="any"
-              value={stopLoss}
-              onChange={(e) => setStopLoss(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm text-muted">{t("journal.target")}</label>
-            <input
-              className="input-field"
-              type="number"
-              min="0"
-              step="any"
-              value={takeProfit}
-              onChange={(e) => setTakeProfit(e.target.value)}
-            />
-          </div>
+          {!isOption ? (
+            <>
+              <div>
+                <label className="mb-2 block text-sm text-muted">{t("journal.stop")}</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={stopLoss}
+                  onChange={(e) => setStopLoss(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm text-muted">{t("journal.target")}</label>
+                <input
+                  className="input-field"
+                  type="number"
+                  min="0"
+                  step="any"
+                  value={takeProfit}
+                  onChange={(e) => setTakeProfit(e.target.value)}
+                />
+              </div>
+            </>
+          ) : null}
         </div>
 
         {trade.status === "closed" ? (
           <>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm text-muted">{t("trade.exitPrice")}</label>
+                <label className="mb-2 block text-sm text-muted">
+                  {isOption ? t("trade.sellPrice") : t("trade.exitPrice")}
+                </label>
                 <input
                   className="input-field"
                   type="number"
-                  min="0.0001"
+                  min="0"
                   step="any"
                   required
                   value={exitPrice}
@@ -193,10 +285,9 @@ export default function TradeEditModal({ trade, open, onClose, onSuccess }: Trad
                 onChange={(e) => setExitAt(e.target.value)}
               />
             </div>
-            {previewPnlPct != null ? (
+            {preview ? (
               <p className="text-sm text-slate-700">
-                {t("trade.estimatedPnl")}: {formatPct(previewPnlPct)} (
-                {formatMoney((Number(exitPrice) - Number(entryPrice)) * Number(entryQty))})
+                {t("trade.estimatedPnl")}: {formatMoney(preview.pnl_usd)} ({formatPct(preview.pnl_pct)})
               </p>
             ) : null}
           </>

@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import date, datetime
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -91,6 +91,14 @@ class Trade(Base):
     symbol: Mapped[str] = mapped_column(String(20), index=True)
     strategy: Mapped[str | None] = mapped_column(String(80), nullable=True)
     setup_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+    # stock | option — stocks from bot signals; options often logged manually
+    instrument_type: Mapped[str] = mapped_column(String(10), default="stock", index=True)
+    option_type: Mapped[str | None] = mapped_column(String(10), nullable=True)  # call | put
+    option_side: Mapped[str | None] = mapped_column(String(10), nullable=True)  # long | short
+    strike: Mapped[float | None] = mapped_column(Float, nullable=True)
+    expiration: Mapped[date | None] = mapped_column(Date, nullable=True)
+    contract_multiplier: Mapped[int] = mapped_column(Integer, default=100)
 
     entry_price: Mapped[float] = mapped_column(Float)
     entry_qty: Mapped[float] = mapped_column(Float)

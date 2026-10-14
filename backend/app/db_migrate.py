@@ -133,4 +133,16 @@ def ensure_schema() -> None:
                 conn.execute(
                     text("ALTER TABLE trades ADD COLUMN account_type VARCHAR(10) DEFAULT 'real'")
                 )
+        option_columns = {
+            "instrument_type": "VARCHAR(10) DEFAULT 'stock'",
+            "option_type": "VARCHAR(10)",
+            "option_side": "VARCHAR(10)",
+            "strike": "FLOAT",
+            "expiration": "DATE",
+            "contract_multiplier": "INTEGER DEFAULT 100",
+        }
+        for name, ddl_type in option_columns.items():
+            if name not in columns:
+                with engine.begin() as conn:
+                    conn.execute(text(f"ALTER TABLE trades ADD COLUMN {name} {ddl_type}"))
 

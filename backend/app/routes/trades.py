@@ -9,7 +9,7 @@ from app.dependencies import get_current_user
 from app.models import Signal, Trade, User
 from app.schemas import TradeClose, TradeCreate, TradeMatchOut, TradeOut, TradeUpdate
 from app.services.export import trades_to_csv
-from app.services.signals import compute_trade_pnl
+from app.services.signals import compute_trade_pnl, trade_pnl_args
 
 router = APIRouter(prefix="/trades", tags=["trades"])
 
@@ -91,6 +91,12 @@ def create_trade(
         symbol=payload.symbol.upper(),
         strategy=payload.strategy or (signal.strategy if signal else None),
         setup_name=payload.setup_name or (signal.setup_name if signal else None),
+        instrument_type=payload.instrument_type,
+        option_type=payload.option_type,
+        option_side=payload.option_side,
+        strike=payload.strike,
+        expiration=payload.expiration,
+        contract_multiplier=payload.contract_multiplier if payload.instrument_type == "option" else 100,
         entry_price=payload.entry_price,
         entry_qty=payload.entry_qty,
         entry_at=payload.entry_at or datetime.utcnow(),
@@ -119,7 +125,9 @@ def close_trade(
     if trade.status == "closed":
         raise HTTPException(status_code=400, detail="Trade already closed")
 
-    pnl_usd, pnl_pct = compute_trade_pnl(trade.entry_price, trade.entry_qty, payload.exit_price)
+    pnl_usd, pnl_pct = compute_trade_pnl(
+        trade.entry_price, trade.entry_qty, payload.exit_price, **trade_pnl_args(trade)
+    )
     trade.exit_price = payload.exit_price
     trade.exit_at = payload.exit_at or datetime.utcnow()
     trade.exit_reason = payload.exit_reason
@@ -156,6 +164,17 @@ def update_trade(
         trade.notes = payload.notes
     if payload.account_type is not None:
         trade.account_type = payload.account_type
+    if trade.instrument_type == "option":
+        if payload.option_type is not None:
+            trade.option_type = payload.option_type
+        if payload.option_side is not None:
+            trade.option_side = payload.option_side
+        if payload.strike is not None:
+            trade.strike = payload.strike
+        if payload.expiration is not None:
+            trade.expiration = payload.expiration
+        if payload.contract_multiplier is not None:
+            trade.contract_multiplier = payload.contract_multiplier
 
     if trade.status == "closed":
         if payload.exit_price is not None:
@@ -165,7 +184,9 @@ def update_trade(
         if payload.exit_reason is not None:
             trade.exit_reason = payload.exit_reason
         if trade.exit_price is not None:
-            pnl_usd, pnl_pct = compute_trade_pnl(trade.entry_price, trade.entry_qty, trade.exit_price)
+            pnl_usd, pnl_pct = compute_trade_pnl(
+                trade.entry_price, trade.entry_qty, trade.exit_price, **trade_pnl_args(trade)
+            )
             trade.pnl_usd = pnl_usd
             trade.pnl_pct = pnl_pct
 

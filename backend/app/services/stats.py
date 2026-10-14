@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 from typing import Callable
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.models import Signal, Trade
@@ -34,10 +35,23 @@ def _in_range(dt: datetime | None, start: datetime | None, end: datetime | None)
     return True
 
 
-def _trade_query(db: Session, user_id: int, account_type: str | None = None):
+def _trade_query(
+    db: Session,
+    user_id: int,
+    account_type: str | None = None,
+    instrument_type: str | None = None,
+):
     query = db.query(Trade).filter(Trade.user_id == user_id)
     if account_type and account_type != "all":
         query = query.filter(Trade.account_type == account_type)
+    if instrument_type and instrument_type != "all":
+        if instrument_type == "stock":
+            # Legacy rows without instrument_type are treated as stocks
+            query = query.filter(
+                or_(Trade.instrument_type == "stock", Trade.instrument_type.is_(None))
+            )
+        else:
+            query = query.filter(Trade.instrument_type == instrument_type)
     return query
 
 
@@ -47,8 +61,9 @@ def dashboard_stats(
     account_type: str | None = None,
     from_date: date | None = None,
     to_date: date | None = None,
+    instrument_type: str | None = None,
 ) -> dict:
-    trades = _trade_query(db, user_id, account_type).all()
+    trades = _trade_query(db, user_id, account_type, instrument_type).all()
     range_start, range_end = _parse_inclusive_range(from_date, to_date)
     has_range = range_start is not None or range_end is not None
 
@@ -103,9 +118,10 @@ def equity_curve(
     account_type: str | None = None,
     from_date: date | None = None,
     to_date: date | None = None,
+    instrument_type: str | None = None,
 ) -> list[dict]:
     closed = (
-        _trade_query(db, user_id, account_type)
+        _trade_query(db, user_id, account_type, instrument_type)
         .filter(Trade.status == "closed", Trade.exit_at.isnot(None))
         .order_by(Trade.exit_at.asc())
         .all()
@@ -160,8 +176,9 @@ def _period_dashboard(
     period_field: str,
     from_date: date | None = None,
     to_date: date | None = None,
+    instrument_type: str | None = None,
 ) -> list[dict]:
-    trades = _trade_query(db, user_id, account_type).all()
+    trades = _trade_query(db, user_id, account_type, instrument_type).all()
     taken_signal_ids = {t.signal_id for t in trades if t.signal_id is not None}
 
     compra_signals = db.query(Signal).filter(Signal.type == "COMPRA").all()
@@ -222,6 +239,7 @@ def monthly_dashboard(
     account_type: str | None = None,
     from_date: date | None = None,
     to_date: date | None = None,
+    instrument_type: str | None = None,
 ) -> list[dict]:
     return _period_dashboard(
         db,
@@ -231,6 +249,7 @@ def monthly_dashboard(
         "month",
         from_date,
         to_date,
+        instrument_type,
     )
 
 
@@ -240,6 +259,7 @@ def weekly_dashboard(
     account_type: str | None = None,
     from_date: date | None = None,
     to_date: date | None = None,
+    instrument_type: str | None = None,
 ) -> list[dict]:
     return _period_dashboard(
         db,
@@ -249,4 +269,5 @@ def weekly_dashboard(
         "week",
         from_date,
         to_date,
+        instrument_type,
     )

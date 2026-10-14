@@ -14,6 +14,7 @@ import {
   DashboardDateRange,
   DashboardStats,
   EquityPoint,
+  InstrumentTypeFilter,
   MonthlyDashboardPoint,
   WeeklyDashboardPoint,
   getToken,
@@ -41,6 +42,7 @@ export default function DashboardPage() {
   const [monthly, setMonthly] = useState<MonthlyDashboardPoint[]>([]);
   const [weekly, setWeekly] = useState<WeeklyDashboardPoint[]>([]);
   const [accountFilter, setAccountFilter] = useState<AccountTypeFilter>("all");
+  const [instrumentFilter, setInstrumentFilter] = useState<InstrumentTypeFilter>("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [periodView, setPeriodView] = useState<PeriodView>("week");
@@ -70,25 +72,25 @@ export default function DashboardPage() {
     }
 
     api
-      .stats(accountFilter, dateRange)
+      .stats(accountFilter, dateRange, instrumentFilter)
       .then(setStats)
       .catch((err) => setError(err instanceof Error ? err.message : t("common.error")));
 
     api
-      .equity(accountFilter, dateRange)
+      .equity(accountFilter, dateRange, instrumentFilter)
       .then(setEquity)
       .catch(() => setEquity([]));
 
     api
-      .monthlyStats(accountFilter, dateRange)
+      .monthlyStats(accountFilter, dateRange, instrumentFilter)
       .then(setMonthly)
       .catch(() => setMonthly([]));
 
     api
-      .weeklyStats(accountFilter, dateRange)
+      .weeklyStats(accountFilter, dateRange, instrumentFilter)
       .then(setWeekly)
       .catch(() => setWeekly([]));
-  }, [router, t, accountFilter, dateRange]);
+  }, [router, t, accountFilter, instrumentFilter, dateRange]);
 
   return (
     <AppShell>
@@ -114,6 +116,29 @@ export default function DashboardPage() {
           onClick={() => setAccountFilter("paper")}
         >
           {t("dashboard.filterPaper")}
+        </button>
+      </div>
+      <div className="mb-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={instrumentFilter === "all" ? "nav-pill-active" : "nav-pill"}
+          onClick={() => setInstrumentFilter("all")}
+        >
+          {t("dashboard.filterInstrumentAll")}
+        </button>
+        <button
+          type="button"
+          className={instrumentFilter === "stock" ? "nav-pill-active" : "nav-pill"}
+          onClick={() => setInstrumentFilter("stock")}
+        >
+          {t("dashboard.filterStock")}
+        </button>
+        <button
+          type="button"
+          className={instrumentFilter === "option" ? "nav-pill-active" : "nav-pill"}
+          onClick={() => setInstrumentFilter("option")}
+        >
+          {t("dashboard.filterOptions")}
         </button>
       </div>
 

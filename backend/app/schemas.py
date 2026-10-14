@@ -1,10 +1,13 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, model_validator
 
 AccountType = Literal["real", "paper"]
+InstrumentType = Literal["stock", "option"]
+OptionType = Literal["call", "put"]
+OptionSide = Literal["long", "short"]
 
 
 class AdminTestEmailIn(BaseModel):
@@ -116,6 +119,12 @@ class TradeCreate(BaseModel):
     symbol: str
     strategy: str | None = None
     setup_name: str | None = None
+    instrument_type: InstrumentType = "stock"
+    option_type: OptionType | None = None
+    option_side: OptionSide | None = None
+    strike: float | None = None
+    expiration: date | None = None
+    contract_multiplier: int = 100
     entry_price: float
     entry_qty: float
     entry_at: datetime | None = None
@@ -123,6 +132,27 @@ class TradeCreate(BaseModel):
     take_profit: float | None = None
     notes: str | None = None
     account_type: AccountType = "real"
+
+    @model_validator(mode="after")
+    def validate_option_fields(self):
+        if self.instrument_type == "option":
+            if not self.option_type:
+                raise ValueError("option_type is required for option trades")
+            if self.strike is None or self.strike <= 0:
+                raise ValueError("strike is required for option trades")
+            if not self.expiration:
+                raise ValueError("expiration is required for option trades")
+            if not self.option_side:
+                self.option_side = "long"
+            if self.contract_multiplier <= 0:
+                raise ValueError("contract_multiplier must be positive")
+        else:
+            self.option_type = None
+            self.option_side = None
+            self.strike = None
+            self.expiration = None
+            self.contract_multiplier = 100
+        return self
 
 
 class TradeClose(BaseModel):
@@ -142,6 +172,11 @@ class TradeUpdate(BaseModel):
     exit_reason: str | None = None
     notes: str | None = None
     account_type: AccountType | None = None
+    option_type: OptionType | None = None
+    option_side: OptionSide | None = None
+    strike: float | None = None
+    expiration: date | None = None
+    contract_multiplier: int | None = None
 
 
 class TradeOut(BaseModel):
@@ -150,6 +185,12 @@ class TradeOut(BaseModel):
     symbol: str
     strategy: str | None
     setup_name: str | None
+    instrument_type: InstrumentType = "stock"
+    option_type: OptionType | None = None
+    option_side: OptionSide | None = None
+    strike: float | None = None
+    expiration: date | None = None
+    contract_multiplier: int = 100
     entry_price: float
     entry_qty: float
     entry_at: datetime

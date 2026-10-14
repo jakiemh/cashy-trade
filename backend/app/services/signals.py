@@ -67,7 +67,35 @@ def user_taken_signal_ids(db: Session, user_id: int, signal_ids: list[int]) -> s
     return {row[0] for row in rows if row[0] is not None}
 
 
-def compute_trade_pnl(entry_price: float, entry_qty: float, exit_price: float) -> tuple[float, float]:
-    pnl_usd = (exit_price - entry_price) * entry_qty
-    pnl_pct = ((exit_price - entry_price) / entry_price * 100) if entry_price else 0.0
+def compute_trade_pnl(
+    entry_price: float,
+    entry_qty: float,
+    exit_price: float,
+    *,
+    instrument_type: str = "stock",
+    option_side: str | None = None,
+    contract_multiplier: int | None = None,
+) -> tuple[float, float]:
+    """P&L for stocks or options.
+
+    Options use premium per share × contracts × multiplier (default 100).
+    Long options: profit when premium rises. Short options: inverse.
+    """
+    direction = 1.0
+    multiplier = 1.0
+    if instrument_type == "option":
+        multiplier = float(contract_multiplier or 100)
+        if (option_side or "long").lower() == "short":
+            direction = -1.0
+
+    pnl_usd = (exit_price - entry_price) * entry_qty * multiplier * direction
+    pnl_pct = ((exit_price - entry_price) / entry_price * 100 * direction) if entry_price else 0.0
     return round(pnl_usd, 2), round(pnl_pct, 2)
+
+
+def trade_pnl_args(trade) -> dict:
+    return {
+        "instrument_type": getattr(trade, "instrument_type", None) or "stock",
+        "option_side": getattr(trade, "option_side", None),
+        "contract_multiplier": getattr(trade, "contract_multiplier", None) or 100,
+    }

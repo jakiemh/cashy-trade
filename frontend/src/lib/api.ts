@@ -32,6 +32,10 @@ export type Signal = {
 
 export type AccountType = "real" | "paper";
 export type AccountTypeFilter = "all" | AccountType;
+export type InstrumentType = "stock" | "option";
+export type InstrumentTypeFilter = "all" | InstrumentType;
+export type OptionType = "call" | "put";
+export type OptionSide = "long" | "short";
 
 export type Trade = {
   id: number;
@@ -39,6 +43,12 @@ export type Trade = {
   symbol: string;
   strategy?: string | null;
   setup_name?: string | null;
+  instrument_type?: InstrumentType;
+  option_type?: OptionType | null;
+  option_side?: OptionSide | null;
+  strike?: number | null;
+  expiration?: string | null;
+  contract_multiplier?: number;
   entry_price: number;
   entry_qty: number;
   entry_at: string;
@@ -53,6 +63,34 @@ export type Trade = {
   account_type: AccountType;
   notes?: string | null;
 };
+
+/** Format option label e.g. "SPY $450 CALL 2026-10-18" */
+export function formatOptionLabel(trade: Pick<Trade, "symbol" | "strike" | "option_type" | "expiration" | "option_side">): string {
+  const type = (trade.option_type || "").toUpperCase();
+  const strike = trade.strike != null ? `$${trade.strike}` : "";
+  const exp = trade.expiration ? String(trade.expiration).slice(0, 10) : "";
+  const side = trade.option_side === "short" ? " SHORT" : "";
+  return [trade.symbol, strike, type, exp].filter(Boolean).join(" ") + side;
+}
+
+/** Preview P&L for stocks or options (premium × contracts × 100). */
+export function previewTradePnl(
+  entryPrice: number,
+  entryQty: number,
+  exitPrice: number,
+  opts?: {
+    instrument_type?: InstrumentType | string | null;
+    option_side?: OptionSide | string | null;
+    contract_multiplier?: number | null;
+  }
+): { pnl_usd: number; pnl_pct: number } {
+  const isOption = (opts?.instrument_type || "stock") === "option";
+  const multiplier = isOption ? opts?.contract_multiplier || 100 : 1;
+  const direction = isOption && opts?.option_side === "short" ? -1 : 1;
+  const pnl_usd = (exitPrice - entryPrice) * entryQty * multiplier * direction;
+  const pnl_pct = entryPrice ? ((exitPrice - entryPrice) / entryPrice) * 100 * direction : 0;
+  return { pnl_usd, pnl_pct };
+}
 
 export type DashboardStats = {
   total_trades: number;
@@ -166,9 +204,14 @@ export function setToken(token: string | null) {
   else localStorage.removeItem("cashy_token");
 }
 
-function dashboardQuery(accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) {
+function dashboardQuery(
+  accountType?: AccountTypeFilter,
+  dateRange?: DashboardDateRange,
+  instrumentType?: InstrumentTypeFilter
+) {
   const query = new URLSearchParams();
   if (accountType && accountType !== "all") query.set("account_type", accountType);
+  if (instrumentType && instrumentType !== "all") query.set("instrument_type", instrumentType);
   if (dateRange?.from) query.set("from_date", dateRange.from);
   if (dateRange?.to) query.set("to_date", dateRange.to);
   const suffix = query.toString();
@@ -263,14 +306,38 @@ export const api = {
     apiFetch<{ trade: Trade | null; cierre_signal_id: number }>(
       `/api/trades/match-cierre/${cierreSignalId}`
     ),
-  stats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
-    apiFetch<DashboardStats>(`/api/dashboard/stats${dashboardQuery(accountType, dateRange)}`),
-  equity: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
-    apiFetch<EquityPoint[]>(`/api/dashboard/equity${dashboardQuery(accountType, dateRange)}`),
-  monthlyStats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
-    apiFetch<MonthlyDashboardPoint[]>(`/api/dashboard/monthly${dashboardQuery(accountType, dateRange)}`),
-  weeklyStats: (accountType?: AccountTypeFilter, dateRange?: DashboardDateRange) =>
-    apiFetch<WeeklyDashboardPoint[]>(`/api/dashboard/weekly${dashboardQuery(accountType, dateRange)}`),
+  stats: (
+    accountType?: AccountTypeFilter,
+    dateRange?: DashboardDateRange,
+    instrumentType?: InstrumentTypeFilter
+  ) =>
+    apiFetch<DashboardStats>(
+      `/api/dashboard/stats${dashboardQuery(accountType, dateRange, instrumentType)}`
+    ),
+  equity: (
+    accountType?: AccountTypeFilter,
+    dateRange?: DashboardDateRange,
+    instrumentType?: InstrumentTypeFilter
+  ) =>
+    apiFetch<EquityPoint[]>(
+      `/api/dashboard/equity${dashboardQuery(accountType, dateRange, instrumentType)}`
+    ),
+  monthlyStats: (
+    accountType?: AccountTypeFilter,
+    dateRange?: DashboardDateRange,
+    instrumentType?: InstrumentTypeFilter
+  ) =>
+    apiFetch<MonthlyDashboardPoint[]>(
+      `/api/dashboard/monthly${dashboardQuery(accountType, dateRange, instrumentType)}`
+    ),
+  weeklyStats: (
+    accountType?: AccountTypeFilter,
+    dateRange?: DashboardDateRange,
+    instrumentType?: InstrumentTypeFilter
+  ) =>
+    apiFetch<WeeklyDashboardPoint[]>(
+      `/api/dashboard/weekly${dashboardQuery(accountType, dateRange, instrumentType)}`
+    ),
   adminStats: () => apiFetch<AdminStats>("/api/admin/stats"),
   adminUsers: () => apiFetch<AdminUser[]>("/api/admin/users"),
   updateAdminUser: (
