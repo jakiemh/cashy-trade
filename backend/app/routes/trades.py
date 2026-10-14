@@ -156,6 +156,8 @@ def update_trade(
         trade.entry_price = payload.entry_price
     if payload.entry_qty is not None:
         trade.entry_qty = payload.entry_qty
+    if payload.entry_at is not None:
+        trade.entry_at = payload.entry_at
     if payload.stop_loss is not None:
         trade.stop_loss = payload.stop_loss
     if payload.take_profit is not None:

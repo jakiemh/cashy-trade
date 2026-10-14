@@ -67,6 +67,18 @@ select {
     @apply w-full rounded-xl border border-emerald-100 bg-white/95 px-4 py-3 text-slate-800 shadow-inner placeholder:text-slate-400;
   }
 
+  .input-field[type="date"],
+  .input-field[type="datetime-local"] {
+    color-scheme: light;
+    min-height: 3rem;
+  }
+
+  .input-field[type="date"]::-webkit-calendar-picker-indicator,
+  .input-field[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 1;
+  }
+
   .nav-pill-active {
     @apply rounded-full bg-brand-gradient px-4 py-2 text-sm text-white shadow-md shadow-emerald-200/50;
   }

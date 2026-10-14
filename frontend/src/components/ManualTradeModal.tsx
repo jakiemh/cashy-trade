@@ -5,6 +5,7 @@ import Modal from "@/components/Modal";
 import { formatMoney } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
 import { AccountType, api, OptionType } from "@/lib/api";
+import { datetimeLocalToIso, nowDatetimeLocal } from "@/lib/datetimeLocal";
 
 const ACCOUNT_TYPE_STORAGE_KEY = "cashy_account_type";
 
@@ -27,6 +28,7 @@ export default function ManualTradeModal({ open, onClose, onSuccess }: ManualTra
   const [expiration, setExpiration] = useState("");
   const [contracts, setContracts] = useState("1");
   const [entryPrice, setEntryPrice] = useState("");
+  const [entryAt, setEntryAt] = useState("");
   const [notes, setNotes] = useState("");
   const [accountType, setAccountType] = useState<AccountType>("real");
   const [error, setError] = useState("");
@@ -40,6 +42,7 @@ export default function ManualTradeModal({ open, onClose, onSuccess }: ManualTra
     setExpiration("");
     setContracts("1");
     setEntryPrice("");
+    setEntryAt(nowDatetimeLocal());
     setNotes("");
     setAccountType(getStoredAccountType());
     setError("");
@@ -65,6 +68,7 @@ export default function ManualTradeModal({ open, onClose, onSuccess }: ManualTra
         contract_multiplier: 100,
         entry_price: Number(entryPrice),
         entry_qty: Number(contracts),
+        entry_at: entryAt ? datetimeLocalToIso(entryAt) : null,
         strategy: "Bollinger",
         setup_name: "Manual options",
         notes: notes.trim() || null,
@@ -98,6 +102,17 @@ export default function ManualTradeModal({ open, onClose, onSuccess }: ManualTra
             <option value="real">{t("trade.accountReal")}</option>
             <option value="paper">{t("trade.accountPaper")}</option>
           </select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm text-muted">{t("trade.entryAt")}</label>
+          <input
+            className="input-field"
+            type="datetime-local"
+            required
+            value={entryAt}
+            onChange={(e) => setEntryAt(e.target.value)}
+          />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
