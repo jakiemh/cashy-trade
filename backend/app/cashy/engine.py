@@ -227,10 +227,16 @@ def process_message(db: Session, user_id: int, locale: str, message: str) -> str
         )
         if not trades:
             return _t(locale, "No tienes trades abiertos.", "You have no open trades.")
-        lines = [
-            f"- {t.symbol}: {t.entry_qty:g} @ ${t.entry_price:.2f}"
-            for t in trades
-        ]
+        lines = []
+        for t in trades:
+            if getattr(t, "instrument_type", None) == "option":
+                opt = (t.option_type or "").upper()
+                strike = f"${t.strike:g}" if t.strike is not None else ""
+                exp = t.expiration.isoformat() if t.expiration else ""
+                label = " ".join(x for x in [t.symbol, strike, opt, exp] if x)
+                lines.append(f"- {label}: {t.entry_qty:g} ctr @ ${t.entry_price:.2f}")
+            else:
+                lines.append(f"- {t.symbol}: {t.entry_qty:g} @ ${t.entry_price:.2f}")
         header = _t(locale, f"Trades abiertos ({len(trades)}):", f"Open trades ({len(trades)}):")
         return header + "\n" + "\n".join(lines)
 

@@ -32,6 +32,9 @@ export type Signal = {
 
 export type AccountType = "real" | "paper";
 export type AccountTypeFilter = "all" | AccountType;
+export type InstrumentType = "stock" | "option";
+export type OptionType = "call" | "put";
+export type OptionSide = "long" | "short";
 
 export type Trade = {
   id: number;
@@ -39,6 +42,12 @@ export type Trade = {
   symbol: string;
   strategy?: string | null;
   setup_name?: string | null;
+  instrument_type?: InstrumentType;
+  option_type?: OptionType | null;
+  option_side?: OptionSide | null;
+  strike?: number | null;
+  expiration?: string | null;
+  contract_multiplier?: number;
   entry_price: number;
   entry_qty: number;
   entry_at: string;
@@ -53,6 +62,34 @@ export type Trade = {
   account_type: AccountType;
   notes?: string | null;
 };
+
+/** Format option label e.g. "SPY $450 CALL 2026-10-18" */
+export function formatOptionLabel(trade: Pick<Trade, "symbol" | "strike" | "option_type" | "expiration" | "option_side">): string {
+  const type = (trade.option_type || "").toUpperCase();
+  const strike = trade.strike != null ? `$${trade.strike}` : "";
+  const exp = trade.expiration ? String(trade.expiration).slice(0, 10) : "";
+  const side = trade.option_side === "short" ? " SHORT" : "";
+  return [trade.symbol, strike, type, exp].filter(Boolean).join(" ") + side;
+}
+
+/** Preview P&L for stocks or options (premium × contracts × 100). */
+export function previewTradePnl(
+  entryPrice: number,
+  entryQty: number,
+  exitPrice: number,
+  opts?: {
+    instrument_type?: InstrumentType | string | null;
+    option_side?: OptionSide | string | null;
+    contract_multiplier?: number | null;
+  }
+): { pnl_usd: number; pnl_pct: number } {
+  const isOption = (opts?.instrument_type || "stock") === "option";
+  const multiplier = isOption ? opts?.contract_multiplier || 100 : 1;
+  const direction = isOption && opts?.option_side === "short" ? -1 : 1;
+  const pnl_usd = (exitPrice - entryPrice) * entryQty * multiplier * direction;
+  const pnl_pct = entryPrice ? ((exitPrice - entryPrice) / entryPrice) * 100 * direction : 0;
+  return { pnl_usd, pnl_pct };
+}
 
 export type DashboardStats = {
   total_trades: number;

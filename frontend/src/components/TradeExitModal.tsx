@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import Modal from "@/components/Modal";
 import { formatMoney, formatPct } from "@/components/ui";
 import { useLocale } from "@/contexts/LocaleContext";
-import { api, Trade } from "@/lib/api";
+import { api, formatOptionLabel, previewTradePnl, Trade } from "@/lib/api";
 
 type TradeExitDefaults = {
   exit_price?: number | null;
@@ -69,17 +69,27 @@ export default function TradeExitModal({
 
   if (!trade) return null;
 
-  const previewPnlPct =
+  const isOption = trade.instrument_type === "option";
+  const title = isOption ? formatOptionLabel(trade) : trade.symbol;
+  const qtyUnit = isOption ? t("journal.contracts") : t("journal.shares");
+  const exitLabel = isOption ? t("trade.sellPrice") : t("trade.exitPrice");
+  const entryLabel = isOption ? t("journal.premium") : t("journal.entry");
+
+  const preview =
     exitPrice && trade.entry_price
-      ? ((Number(exitPrice) - trade.entry_price) / trade.entry_price) * 100
+      ? previewTradePnl(trade.entry_price, trade.entry_qty, Number(exitPrice), {
+          instrument_type: trade.instrument_type,
+          option_side: trade.option_side,
+          contract_multiplier: trade.contract_multiplier,
+        })
       : null;
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={`${t("trade.closeTitle")} — ${trade.symbol}`}
-      subtitle={`${t("journal.entry")} ${formatMoney(trade.entry_price)} x ${trade.entry_qty} ${t("journal.shares")}`}
+      title={`${t("trade.closeTitle")} — ${title}`}
+      subtitle={`${entryLabel} ${formatMoney(trade.entry_price)} x ${trade.entry_qty} ${qtyUnit}`}
     >
       <form className="space-y-4" onSubmit={onSubmit}>
         {defaults?.exit_price != null ? (
@@ -90,15 +100,16 @@ export default function TradeExitModal({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm text-muted">{t("trade.exitPrice")}</label>
+            <label className="mb-2 block text-sm text-muted">{exitLabel}</label>
             <input
               className="input-field"
               type="number"
-              min="0.0001"
+              min="0"
               step="any"
               required
               value={exitPrice}
               onChange={(e) => setExitPrice(e.target.value)}
+              placeholder={isOption ? "3.20" : undefined}
             />
           </div>
           <div>
@@ -117,11 +128,18 @@ export default function TradeExitModal({
           </div>
         </div>
 
-        {previewPnlPct != null ? (
-          <p className="text-sm text-slate-700">
-            {t("trade.estimatedPnl")}: {formatPct(previewPnlPct)} (
-            {formatMoney((Number(exitPrice) - trade.entry_price) * trade.entry_qty)})
-          </p>
+        {preview ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            <p>
+              {t("trade.estimatedPnl")}:{" "}
+              <span className={preview.pnl_usd >= 0 ? "text-emerald-700" : "text-rose-700"}>
+                {formatMoney(preview.pnl_usd)} ({formatPct(preview.pnl_pct)})
+              </span>
+            </p>
+            {isOption ? (
+              <p className="mt-1 text-xs text-muted">{t("trade.optionPnlFormula")}</p>
+            ) : null}
+          </div>
         ) : null}
 
         <div>
