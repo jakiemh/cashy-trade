@@ -195,6 +195,18 @@ export const es = {
     language: "Idioma",
     spanish: "Español",
     english: "English",
+    festiveTheme: "Tema festivo",
+    festiveAuto: "Automático por fecha",
+    festiveOff: "Desactivado",
+    festiveHint: "Cambia colores y animaciones según la fecha (Halloween, Navidad, etc.).",
+  },
+  festive: {
+    halloween: "Halloween",
+    christmas: "Navidad",
+    newyear: "Año Nuevo",
+    valentine: "San Valentín",
+    independence: "Independencia CR",
+    active: "Tema activo",
   },
   admin: {
     title: "Panel admin",

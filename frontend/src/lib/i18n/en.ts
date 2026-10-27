@@ -197,6 +197,18 @@ export const en: Messages = {
     language: "Language",
     spanish: "Español",
     english: "English",
+    festiveTheme: "Festive theme",
+    festiveAuto: "Automatic by date",
+    festiveOff: "Off",
+    festiveHint: "Switches colors and animations by date (Halloween, Christmas, etc.).",
+  },
+  festive: {
+    halloween: "Halloween",
+    christmas: "Christmas",
+    newyear: "New Year",
+    valentine: "Valentine's Day",
+    independence: "Costa Rica Independence",
+    active: "Active theme",
   },
   admin: {
     title: "Admin panel",

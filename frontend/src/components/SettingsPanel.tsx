@@ -2,9 +2,11 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import CashyAvatar from "@/components/CashyAvatar";
+import { useFestiveTheme } from "@/contexts/FestiveThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { api } from "@/lib/api";
 import { CASHY_AVATARS, DEFAULT_CASHY_AVATAR } from "@/lib/cashy";
+import { FestiveMode } from "@/lib/festiveThemes";
 import { normalizeLocale, type Locale } from "@/lib/i18n";
 
 type SettingsPanelProps = {
@@ -14,6 +16,7 @@ type SettingsPanelProps = {
 
 export default function SettingsPanel({ onSaved, compact = false }: SettingsPanelProps) {
   const { t, setLocale: applyLocale } = useLocale();
+  const { mode: festiveMode, setMode: setFestiveMode, themes, autoTheme } = useFestiveTheme();
   const [botName, setBotName] = useState("Cashy");
   const [locale, setLocale] = useState<Locale>("es");
   const [avatarUrl, setAvatarUrl] = useState<string>(DEFAULT_CASHY_AVATAR);
@@ -106,6 +109,27 @@ export default function SettingsPanel({ onSaved, compact = false }: SettingsPane
           <option value="es">{t("settings.spanish")}</option>
           <option value="en">{t("settings.english")}</option>
         </select>
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm text-muted">{t("settings.festiveTheme")}</label>
+        <select
+          className="input-field"
+          value={festiveMode}
+          onChange={(e) => setFestiveMode(e.target.value as FestiveMode)}
+        >
+          <option value="auto">
+            {t("settings.festiveAuto")}
+            {autoTheme ? ` (${t(autoTheme.labelKey)})` : ""}
+          </option>
+          <option value="off">{t("settings.festiveOff")}</option>
+          {themes.map((theme) => (
+            <option key={theme.id} value={theme.id}>
+              {theme.emoji} {t(theme.labelKey)}
+            </option>
+          ))}
+        </select>
+        <p className="mt-2 text-xs text-muted">{t("settings.festiveHint")}</p>
       </div>
 
       <button className="btn-primary w-full sm:w-auto" type="submit">
