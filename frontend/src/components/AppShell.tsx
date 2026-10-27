@@ -8,6 +8,7 @@ import CashyBubble, { type CashyBubbleHandle } from "@/components/CashyBubble";
 import CashyAvatar from "@/components/CashyAvatar";
 import MobileBottomNav, { mobileNavIcons } from "@/components/MobileBottomNav";
 import SettingsGear, { type SettingsGearHandle } from "@/components/SettingsGear";
+import { useFestiveTheme } from "@/contexts/FestiveThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSignalPollingContext } from "@/contexts/SignalPollingContext";
 import { setToken } from "@/lib/api";
@@ -38,6 +39,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { t, isAdmin } = useLocale();
+  const { theme: festiveTheme } = useFestiveTheme();
   const { pendingCount } = useSignalPollingContext();
   const settingsRef = useRef<SettingsGearHandle>(null);
   const cashyRef = useRef<CashyBubbleHandle>(null);
@@ -83,8 +85,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {t("app.subtitle")}
               </h1>
             </div>
+            {festiveTheme ? (
+              <span className="festive-badge hidden sm:inline-flex" title={t("festive.active")}>
+                <span aria-hidden="true">{festiveTheme.emoji}</span>
+                {t(festiveTheme.labelKey)}
+              </span>
+            ) : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            {festiveTheme ? (
+              <span className="festive-badge sm:hidden" title={t("festive.active")}>
+                <span aria-hidden="true">{festiveTheme.emoji}</span>
+              </span>
+            ) : null}
             <MobileSettingsButton onClick={() => settingsRef.current?.open()} />
             {isAdmin ? (
               <Link href="/admin" className={pathname.startsWith("/admin") ? "nav-pill-active" : "nav-pill"}>
