@@ -27,7 +27,7 @@ export const FESTIVE_STORAGE_KEY = "cashy_festive_mode";
 export const FESTIVE_THEMES: FestiveTheme[] = [
   {
     id: "halloween",
-    windows: [{ start: "10-20", end: "11-02" }],
+    windows: [{ start: "10-20", end: "10-31" }],
     labelKey: "festive.halloween",
     emoji: "🎃",
     particles: ["🎃", "🦇", "👻", "🍁", "🕷️"],
