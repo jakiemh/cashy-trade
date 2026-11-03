@@ -33,7 +33,15 @@ export default function AdminPage() {
     setSignals(signalsData);
     setEmailStatus(
       emailStatusData.configured
-        ? `${emailStatusData.provider} · ${emailStatusData.email_from}`
+        ? `${emailStatusData.provider} · ${emailStatusData.smtp_user ?? ""}${
+            emailStatusData.smtp_password_valid_length === false
+              ? " · revisa SMTP_PASSWORD (debe tener 16 caracteres)"
+              : ""
+          }${
+            emailStatusData.email_from_matches_smtp_user === false
+              ? " · EMAIL_FROM no coincide con SMTP_USER"
+              : ""
+          }`
         : "not_configured"
     );
     setError("");
