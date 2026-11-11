@@ -1,5 +1,6 @@
 """Lazy WebAuthn imports — the main API must cold-start without loading this stack."""
 
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -28,9 +29,13 @@ def b64_from_bytes(value: bytes) -> str:
 
 
 def options_dict(options) -> dict:
-    from webauthn.helpers import options_to_json_dict
-
-    return options_to_json_dict(options)
+    try:
+        from webauthn.helpers import options_to_json
+    except ImportError as exc:
+        logger.exception("WebAuthn dependency import failed")
+        raise WebAuthnDependencyError from exc
+    # webauthn 2.5.x returns a JSON string (not a dict).
+    return json.loads(options_to_json(options))
 
 
 def generate_registration_options(**kwargs):
