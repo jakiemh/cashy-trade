@@ -109,6 +109,9 @@ def credential_descriptor(credential_id: bytes, transports_csv: str | None):
 
 
 def auth_user_verification():
-    from webauthn.helpers.structs import UserVerificationRequirement
-
+    try:
+        from webauthn.helpers.structs import UserVerificationRequirement
+    except ImportError as exc:
+        logger.exception("WebAuthn dependency import failed")
+        raise WebAuthnDependencyError from exc
     return UserVerificationRequirement.REQUIRED
