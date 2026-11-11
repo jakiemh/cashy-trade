@@ -144,7 +144,6 @@ def registration_options(db: Session, user: User, request: Request) -> dict:
         user_display_name=user.name or user.email,
         authenticator_selection=_selection(),
         exclude_credentials=exclude,
-        hints=wb.registration_hints(),
     )
     _store_challenge(
         db,

@@ -65,7 +65,7 @@ class WebAuthnChallenge(Base):
     challenge: Mapped[str] = mapped_column(String(200), unique=True, index=True)
     purpose: Mapped[str] = mapped_column(String(16), index=True)
     user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
-    login_reject: Mapped[bool] = mapped_column(Boolean, default=False)
+    login_reject: Mapped[bool] = mapped_column("reject", Boolean, default=False)
     rp_id: Mapped[str] = mapped_column(String(255))
     origin: Mapped[str] = mapped_column(String(255))
     user_handle: Mapped[str | None] = mapped_column(String(128), nullable=True)
