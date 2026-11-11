@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, engine
 from app.db_migrate import ensure_schema
+import app.models  # noqa: F401 — register ORM tables before create_all
 from app.routes import admin, app_routes, auth, chat, push, signals, trades, ws
 
 logger = logging.getLogger(__name__)

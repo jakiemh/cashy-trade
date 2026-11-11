@@ -151,6 +151,26 @@ def ensure_schema() -> None:
         if "user_handle" not in columns:
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE webauthn_challenges ADD COLUMN user_handle VARCHAR(128)"))
+        if "reject" not in columns:
+            if "login_reject" in columns:
+                with engine.begin() as conn:
+                    if engine.dialect.name == "sqlite":
+                        conn.execute(
+                            text("ALTER TABLE webauthn_challenges RENAME COLUMN login_reject TO reject")
+                        )
+                    else:
+                        conn.execute(
+                            text('ALTER TABLE webauthn_challenges RENAME COLUMN login_reject TO "reject"')
+                        )
+            else:
+                default = "FALSE" if engine.dialect.name != "sqlite" else "0"
+                reject_col = "reject" if engine.dialect.name == "sqlite" else '"reject"'
+                with engine.begin() as conn:
+                    conn.execute(
+                        text(
+                            f"ALTER TABLE webauthn_challenges ADD COLUMN {reject_col} BOOLEAN NOT NULL DEFAULT {default}"
+                        )
+                    )
 
     if "webauthn_credentials" not in tables:
         if engine.dialect.name == "sqlite":
@@ -174,7 +194,7 @@ def ensure_schema() -> None:
             """
         else:
             ddl = """
-            CREATE TABLE webauthn_credentials (
+            CREATE TABLE IF NOT EXISTS webauthn_credentials (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER NOT NULL REFERENCES users(id),
                 credential_id TEXT NOT NULL UNIQUE,
@@ -211,12 +231,12 @@ def ensure_schema() -> None:
             """
         else:
             ddl = """
-            CREATE TABLE webauthn_challenges (
+            CREATE TABLE IF NOT EXISTS webauthn_challenges (
                 id SERIAL PRIMARY KEY,
                 challenge VARCHAR(200) NOT NULL UNIQUE,
                 purpose VARCHAR(16) NOT NULL,
                 user_id INTEGER,
-                reject BOOLEAN NOT NULL DEFAULT FALSE,
+                "reject" BOOLEAN NOT NULL DEFAULT FALSE,
                 rp_id VARCHAR(255) NOT NULL,
                 origin VARCHAR(255) NOT NULL,
                 user_handle VARCHAR(128),
