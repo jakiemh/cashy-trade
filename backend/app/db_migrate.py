@@ -146,6 +146,15 @@ def ensure_schema() -> None:
                 with engine.begin() as conn:
                     conn.execute(text(f"ALTER TABLE trades ADD COLUMN {name} {ddl_type}"))
 
+    if "webauthn_challenges" in tables:
+        columns = {col["name"] for col in inspector.get_columns("webauthn_challenges")}
+        if "reject" in columns and "login_reject" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE webauthn_challenges RENAME COLUMN reject TO login_reject"))
+        if "user_handle" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE webauthn_challenges ADD COLUMN user_handle VARCHAR(128)"))
+
     if "webauthn_credentials" not in tables:
         if engine.dialect.name == "sqlite":
             ddl = """
@@ -195,7 +204,7 @@ def ensure_schema() -> None:
                 challenge VARCHAR(200) NOT NULL UNIQUE,
                 purpose VARCHAR(16) NOT NULL,
                 user_id INTEGER,
-                reject BOOLEAN NOT NULL DEFAULT 0,
+                login_reject BOOLEAN NOT NULL DEFAULT 0,
                 rp_id VARCHAR(255) NOT NULL,
                 origin VARCHAR(255) NOT NULL,
                 user_handle VARCHAR(128),
@@ -210,7 +219,7 @@ def ensure_schema() -> None:
                 challenge VARCHAR(200) NOT NULL UNIQUE,
                 purpose VARCHAR(16) NOT NULL,
                 user_id INTEGER,
-                reject BOOLEAN NOT NULL DEFAULT FALSE,
+                login_reject BOOLEAN NOT NULL DEFAULT FALSE,
                 rp_id VARCHAR(255) NOT NULL,
                 origin VARCHAR(255) NOT NULL,
                 user_handle VARCHAR(128),

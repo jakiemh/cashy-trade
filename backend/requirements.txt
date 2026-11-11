@@ -20,5 +20,5 @@ psycopg[binary]>=3.2.0
 
 pywebpush>=2.0.0
 
-webauthn>=2.5.3,<2.9
+webauthn==2.5.3
 

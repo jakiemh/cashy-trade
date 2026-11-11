@@ -1,5 +1,13 @@
 """Lazy WebAuthn imports — the main API must cold-start without loading this stack."""
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+class WebAuthnDependencyError(RuntimeError):
+    pass
+
 
 def b64_to_bytes(value: str) -> bytes:
     from webauthn.helpers import base64url_to_bytes
@@ -20,14 +28,20 @@ def options_dict(options) -> dict:
 
 
 def generate_registration_options(**kwargs):
-    from webauthn import generate_registration_options as fn
-
+    try:
+        from webauthn import generate_registration_options as fn
+    except ImportError as exc:
+        logger.exception("WebAuthn dependency import failed")
+        raise WebAuthnDependencyError from exc
     return fn(**kwargs)
 
 
 def generate_authentication_options(**kwargs):
-    from webauthn import generate_authentication_options as fn
-
+    try:
+        from webauthn import generate_authentication_options as fn
+    except ImportError as exc:
+        logger.exception("WebAuthn dependency import failed")
+        raise WebAuthnDependencyError from exc
     return fn(**kwargs)
 
 

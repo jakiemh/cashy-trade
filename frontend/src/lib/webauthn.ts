@@ -91,6 +91,7 @@ export function webauthnErrorKey(err: unknown): string {
   if (detail === "webauthn_not_found") return "auth.biometricNoCredential";
   if (detail === "webauthn_already") return "auth.biometricAlready";
   if (detail === "webauthn_origin") return "auth.biometricUnavailable";
+  if (detail === "webauthn_unavailable") return "auth.biometricUnavailable";
   return "auth.biometricFailed";
 }
 

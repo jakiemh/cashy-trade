@@ -10,8 +10,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.auth import create_access_token
-from app.services import webauthn_bridge as wb
 from app.config import settings
+from app.db_migrate import ensure_schema
+from app.services import webauthn_bridge as wb
 from app.models import User, WebAuthnChallenge, WebAuthnCredential
 
 logger = logging.getLogger(__name__)
@@ -77,7 +78,7 @@ def _store_challenge(
     origin: str,
     rp_id: str,
     user_id: int | None = None,
-    reject: bool = False,
+    login_reject: bool = False,
     user_handle: str | None = None,
 ) -> None:
     _purge_expired(db)
@@ -86,7 +87,7 @@ def _store_challenge(
             challenge=wb.b64_from_bytes(challenge),
             purpose=purpose,
             user_id=user_id,
-            reject=reject,
+            login_reject=login_reject,
             rp_id=rp_id,
             origin=origin,
             user_handle=user_handle,
@@ -117,7 +118,12 @@ def _selection():
     return wb.authenticator_selection()
 
 
+def _prepare_db() -> None:
+    ensure_schema()
+
+
 def registration_options(db: Session, user: User, request: Request) -> dict:
+    _prepare_db()
     origin, rp_id = ceremony_context(request)
     existing = _user_credentials(db, user.id)
     if existing:
@@ -229,6 +235,7 @@ def register_credential(
     credential_payload: dict,
     user_agent: str | None,
 ) -> str:
+    _prepare_db()
     credential = _credential_dict(credential_payload)
     challenge = _take_challenge(db, _challenge_from_credential(credential), "register")
     if challenge.user_id != user.id:
@@ -300,6 +307,7 @@ def login_options(
     email: str | None,
     credential_id: str | None,
 ) -> dict:
+    _prepare_db()
     origin, rp_id = ceremony_context(request)
     bound_user_id: int | None = None
     reject = False
@@ -334,7 +342,7 @@ def login_options(
         origin=origin,
         rp_id=rp_id,
         user_id=bound_user_id,
-        reject=reject,
+        login_reject=reject,
     )
     payload = wb.options_dict(options)
     if not payload.get("allowCredentials"):
@@ -343,13 +351,14 @@ def login_options(
 
 
 def login_with_credential(db: Session, credential_payload: dict) -> str:
+    _prepare_db()
     credential = _credential_dict(credential_payload)
     credential_id = credential.get("id")
     if not isinstance(credential_id, str):
         raise WebAuthnRejected("webauthn_invalid")
 
     challenge = _take_challenge(db, _challenge_from_credential(credential), "login")
-    if challenge.reject:
+    if challenge.login_reject:
         _consume_challenge(db, challenge)
         db.commit()
         raise WebAuthnRejected("webauthn_invalid")
