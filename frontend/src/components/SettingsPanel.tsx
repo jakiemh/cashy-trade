@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { BiometricSettings } from "@/components/BiometricAuth";
 import CashyAvatar from "@/components/CashyAvatar";
 import { useFestiveTheme } from "@/contexts/FestiveThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
@@ -54,7 +55,8 @@ export default function SettingsPanel({ onSaved, compact = false }: SettingsPane
   }
 
   return (
-    <form className={`space-y-5 ${compact ? "" : "max-w-2xl"}`} onSubmit={onSubmit}>
+    <div className={compact ? "" : "max-w-2xl"}>
+    <form className="space-y-5" onSubmit={onSubmit}>
       <div className="flex items-center gap-4">
         <CashyAvatar src={avatarUrl} size={compact ? 64 : 80} />
         <div>
@@ -137,5 +139,7 @@ export default function SettingsPanel({ onSaved, compact = false }: SettingsPane
       </button>
       {message ? <p className="text-sm font-medium text-brand-600">{message}</p> : null}
     </form>
+    <BiometricSettings />
+    </div>
   );
 }
