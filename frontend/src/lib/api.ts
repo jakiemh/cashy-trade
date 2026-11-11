@@ -6,15 +6,6 @@ export type User = {
   is_admin?: boolean;
 };
 
-export type WebAuthnCredentialInfo = {
-  id: number;
-  credential_id: string;
-  label: string;
-  created_at: string;
-  last_used_at?: string | null;
-  device_type?: string | null;
-};
-
 export type Signal = {
   id: number;
   type: "COMPRA" | "CIERRE" | "AVISO" | string;
@@ -262,31 +253,6 @@ export const api = {
     apiFetch<{ ok: boolean; message: string }>("/api/auth/reset-password", {
       method: "POST",
       body: JSON.stringify({ token, password }),
-    }),
-  webauthnRegisterOptions: () =>
-    apiFetch<{ options: Record<string, unknown> }>("/api/auth/webauthn/register/options", {
-      method: "POST",
-      body: "{}",
-    }),
-  webauthnRegisterVerify: (credential: Record<string, unknown>) =>
-    apiFetch<{ credential_id: string }>("/api/auth/webauthn/register/verify", {
-      method: "POST",
-      body: JSON.stringify({ credential }),
-    }),
-  webauthnCredentials: () => apiFetch<WebAuthnCredentialInfo[]>("/api/auth/webauthn/credentials"),
-  webauthnDeleteCredential: (id: number) =>
-    apiFetch<{ ok: boolean; message: string }>(`/api/auth/webauthn/credentials/${id}`, {
-      method: "DELETE",
-    }),
-  webauthnLoginOptions: (payload: { email?: string; credential_id?: string }) =>
-    apiFetch<{ options: Record<string, unknown> }>("/api/auth/webauthn/login/options", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-  webauthnLoginVerify: (credential: Record<string, unknown>) =>
-    apiFetch<{ access_token: string }>("/api/auth/webauthn/login/verify", {
-      method: "POST",
-      body: JSON.stringify({ credential }),
     }),
   signals: (params?: SignalFilters) => {
     const query = new URLSearchParams();

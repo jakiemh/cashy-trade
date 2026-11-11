@@ -22,7 +22,6 @@ class User(Base):
     watchlist: Mapped[list["WatchlistItem"]] = relationship(back_populates="user")
     chat_messages: Mapped[list["ChatMessage"]] = relationship(back_populates="user")
     password_reset_tokens: Mapped[list["PasswordResetToken"]] = relationship(back_populates="user")
-    webauthn_credentials: Mapped[list["WebAuthnCredential"]] = relationship(back_populates="user")
 
 
 class PasswordResetToken(Base):
@@ -36,41 +35,6 @@ class PasswordResetToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship(back_populates="password_reset_tokens")
-
-
-class WebAuthnCredential(Base):
-    __tablename__ = "webauthn_credentials"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    credential_id: Mapped[str] = mapped_column(Text, unique=True, index=True)
-    public_key: Mapped[str] = mapped_column(Text)
-    user_handle: Mapped[str] = mapped_column(Text)
-    sign_count: Mapped[int] = mapped_column(Integer, default=0)
-    transports: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    device_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
-    backed_up: Mapped[bool] = mapped_column(Boolean, default=False)
-    aaguid: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    label: Mapped[str] = mapped_column(String(80), default="Device")
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    last_used_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-
-    user: Mapped["User"] = relationship(back_populates="webauthn_credentials")
-
-
-class WebAuthnChallenge(Base):
-    __tablename__ = "webauthn_challenges"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    challenge: Mapped[str] = mapped_column(String(200), unique=True, index=True)
-    purpose: Mapped[str] = mapped_column(String(16), index=True)
-    user_id: Mapped[int | None] = mapped_column(Integer, nullable=True, index=True)
-    reject: Mapped[bool] = mapped_column(Boolean, default=False)
-    rp_id: Mapped[str] = mapped_column(String(255))
-    origin: Mapped[str] = mapped_column(String(255))
-    user_handle: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    expires_at: Mapped[datetime] = mapped_column(DateTime, index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
 
 class UserSettings(Base):

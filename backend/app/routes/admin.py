@@ -5,17 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.dependencies import get_admin_user
-from app.models import (
-    ChatMessage,
-    PushSubscription,
-    Signal,
-    Trade,
-    User,
-    UserSettings,
-    WatchlistItem,
-    WebAuthnChallenge,
-    WebAuthnCredential,
-)
+from app.models import ChatMessage, PushSubscription, Signal, Trade, User, UserSettings, WatchlistItem
 from app.schemas import AdminStatsOut, AdminTestEmailIn, AdminUserOut, AdminUserUpdate, SignalOut
 from app.auth import hash_password
 from app.services.email import email_config_status, send_test_email
@@ -125,8 +115,6 @@ def delete_user(
     if target.id == admin.id:
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
 
-    db.query(WebAuthnCredential).filter(WebAuthnCredential.user_id == user_id).delete()
-    db.query(WebAuthnChallenge).filter(WebAuthnChallenge.user_id == user_id).delete()
     db.query(PushSubscription).filter(PushSubscription.user_id == user_id).delete()
     db.query(ChatMessage).filter(ChatMessage.user_id == user_id).delete()
     db.query(WatchlistItem).filter(WatchlistItem.user_id == user_id).delete()
