@@ -42,20 +42,25 @@ def _run_webauthn(action: Callable[[], T]) -> T:
         raise http_from_rejected(exc) from exc
     except WebAuthnDependencyError as exc:
         logger.exception("WebAuthn dependency unavailable")
-        raise HTTPException(status_code=503, detail="webauthn_unavailable") from exc
-    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail="webauthn_import_failed") from exc
+    except SQLAlchemyError as exc:
         logger.exception("WebAuthn database error; retrying after schema repair")
         ensure_schema()
         try:
             return action()
-        except WebAuthnRejected as exc:
-            raise http_from_rejected(exc) from exc
-        except Exception as exc:
+        except WebAuthnRejected as rejected:
+            raise http_from_rejected(rejected) from rejected
+        except SQLAlchemyError as retry_exc:
+            logger.exception("WebAuthn database error after schema repair")
+            raise HTTPException(status_code=503, detail="webauthn_db_failed") from retry_exc
+        except WebAuthnDependencyError as retry_exc:
+            raise HTTPException(status_code=503, detail="webauthn_import_failed") from retry_exc
+        except Exception as retry_exc:
             logger.exception("WebAuthn failed after schema repair")
-            raise HTTPException(status_code=503, detail="webauthn_unavailable") from exc
+            raise HTTPException(status_code=503, detail="webauthn_unknown") from retry_exc
     except Exception as exc:
         logger.exception("WebAuthn handler failed")
-        raise HTTPException(status_code=503, detail="webauthn_unavailable") from exc
+        raise HTTPException(status_code=503, detail="webauthn_unknown") from exc
 
 
 @router.post("/register/options", response_model=WebAuthnOptionsOut)

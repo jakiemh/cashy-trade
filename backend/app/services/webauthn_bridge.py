@@ -10,14 +10,20 @@ class WebAuthnDependencyError(RuntimeError):
 
 
 def b64_to_bytes(value: str) -> bytes:
-    from webauthn.helpers import base64url_to_bytes
-
+    try:
+        from webauthn.helpers import base64url_to_bytes
+    except ImportError as exc:
+        logger.exception("WebAuthn dependency import failed")
+        raise WebAuthnDependencyError from exc
     return base64url_to_bytes(value)
 
 
 def b64_from_bytes(value: bytes) -> str:
-    from webauthn.helpers import bytes_to_base64url
-
+    try:
+        from webauthn.helpers import bytes_to_base64url
+    except ImportError as exc:
+        logger.exception("WebAuthn dependency import failed")
+        raise WebAuthnDependencyError from exc
     return bytes_to_base64url(value)
 
 
@@ -41,6 +47,9 @@ def generate_authentication_options(**kwargs):
         from webauthn import generate_authentication_options as fn
     except ImportError as exc:
         logger.exception("WebAuthn dependency import failed")
+        raise WebAuthnDependencyError from exc
+    except Exception as exc:
+        logger.exception("WebAuthn authentication options failed")
         raise WebAuthnDependencyError from exc
     return fn(**kwargs)
 
