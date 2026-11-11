@@ -57,10 +57,12 @@ def _run_webauthn(action: Callable[[], T]) -> T:
             raise HTTPException(status_code=503, detail="webauthn_import_failed") from retry_exc
         except Exception as retry_exc:
             logger.exception("WebAuthn failed after schema repair")
-            raise HTTPException(status_code=503, detail="webauthn_unknown") from retry_exc
+            raise HTTPException(
+                status_code=503, detail=f"webauthn_unknown:{type(retry_exc).__name__}"
+            ) from retry_exc
     except Exception as exc:
         logger.exception("WebAuthn handler failed")
-        raise HTTPException(status_code=503, detail="webauthn_unknown") from exc
+        raise HTTPException(status_code=503, detail=f"webauthn_unknown:{type(exc).__name__}") from exc
 
 
 @router.post("/register/options", response_model=WebAuthnOptionsOut)
