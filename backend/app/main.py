@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -5,6 +7,8 @@ from app.config import settings
 from app.database import Base, engine
 from app.db_migrate import ensure_schema
 from app.routes import admin, app_routes, auth, chat, push, signals, trades, ws
+
+logger = logging.getLogger(__name__)
 
 Base.metadata.create_all(bind=engine)
 ensure_schema()
@@ -20,6 +24,12 @@ app.add_middleware(
 )
 
 app.include_router(auth.router, prefix="/api")
+try:
+    from app.routes import webauthn
+
+    app.include_router(webauthn.router, prefix="/api")
+except Exception:
+    logger.exception("WebAuthn routes disabled; password login still works")
 app.include_router(signals.router, prefix="/api")
 app.include_router(trades.router, prefix="/api")
 app.include_router(chat.router, prefix="/api")

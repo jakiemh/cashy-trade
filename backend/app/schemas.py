@@ -44,6 +44,38 @@ class UserLogin(BaseModel):
     password: str
 
 
+class WebAuthnOptionsOut(BaseModel):
+    options: dict
+
+
+class WebAuthnRegisterIn(BaseModel):
+    credential: dict
+
+
+class WebAuthnRegisteredOut(BaseModel):
+    credential_id: str
+
+
+class WebAuthnLoginOptionsIn(BaseModel):
+    email: EmailStr | None = None
+    credential_id: str | None = None
+
+
+class WebAuthnLoginIn(BaseModel):
+    credential: dict
+
+
+class WebAuthnCredentialOut(BaseModel):
+    id: int
+    credential_id: str
+    label: str
+    created_at: datetime
+    last_used_at: datetime | None = None
+    device_type: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
 class UserOut(BaseModel):
     id: int
     email: EmailStr

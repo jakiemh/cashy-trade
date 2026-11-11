@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { BiometricOffer } from "@/components/BiometricAuth";
 import CashyAvatar from "@/components/CashyAvatar";
 import { useLocale } from "@/contexts/LocaleContext";
 import { api, setToken } from "@/lib/api";
 import { CASHY_AVATARS } from "@/lib/cashy";
+import { shouldOfferBiometric } from "@/lib/webauthn";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -16,6 +18,11 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [offerBiometric, setOfferBiometric] = useState(false);
+
+  function goToApp() {
+    router.push("/dashboard");
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -24,10 +31,14 @@ export default function RegisterPage() {
     try {
       const { access_token } = await api.register(email, password, name);
       setToken(access_token);
-      router.push("/dashboard");
+      if (await shouldOfferBiometric()) {
+        setOfferBiometric(true);
+        setLoading(false);
+        return;
+      }
+      goToApp();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.error"));
-    } finally {
       setLoading(false);
     }
   }
@@ -41,6 +52,9 @@ export default function RegisterPage() {
           <h1 className="mt-2 text-2xl font-semibold text-slate-800">{t("auth.registerTitle")}</h1>
           <p className="mt-2 text-sm text-muted">{t("auth.registerSubtitle")}</p>
         </div>
+        {offerBiometric ? (
+          <BiometricOffer onContinue={goToApp} />
+        ) : (
         <form className="mt-8 space-y-4" onSubmit={onSubmit}>
           <input
             className="input-field"
@@ -70,12 +84,15 @@ export default function RegisterPage() {
             {loading ? t("auth.registering") : t("auth.register")}
           </button>
         </form>
-        <p className="mt-6 text-center text-sm text-muted">
-          {t("auth.hasAccount")}{" "}
-          <Link className="font-medium text-brand-600 hover:underline" href="/login">
-            {t("auth.signIn")}
-          </Link>
-        </p>
+        )}
+        {offerBiometric ? null : (
+          <p className="mt-6 text-center text-sm text-muted">
+            {t("auth.hasAccount")}{" "}
+            <Link className="font-medium text-brand-600 hover:underline" href="/login">
+              {t("auth.signIn")}
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );
